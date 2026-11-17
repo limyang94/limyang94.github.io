@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCS 功能改动清单 · feat-xxx261113（2026-11-17）</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: #f4f6f9; color: #2c3e50; line-height: 1.65; padding: 24px 16px 60px;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+  .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.08); padding: 28px 32px; margin-bottom: 20px; }
+  h1 { font-size: 22px; margin-bottom: 6px; color: #1a2a3a; }
+  .sub { color: #7f8c9b; font-size: 13px; margin-bottom: 18px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  .chip { font-size: 12px; padding: 3px 12px; border-radius: 20px; background: #eef2f7; color: #4a5b6d; border: 1px solid #dde4ec; }
+  .chip.ok { background: #e8f7ee; color: #1e7e44; border-color: #bfe8cf; }
+  .chip.warn { background: #fff7e8; color: #9a6b00; border-color: #f2e0b8; }
+  h2 { font-size: 16px; margin: 26px 0 10px; padding-left: 10px; border-left: 4px solid #3468a8; color: #1a2a3a; }
+  h2 .tag { font-size: 12px; font-weight: normal; color: #8a97a5; margin-left: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 8px; }
+  th, td { border: 1px solid #e3e9f0; padding: 9px 12px; text-align: left; vertical-align: top; }
+  th { background: #f0f4f9; color: #44566b; font-weight: 600; white-space: nowrap; }
+  td.no { text-align: center; color: #97a3b0; white-space: nowrap; width: 40px; }
+  td.mod { font-weight: 600; color: #23517e; white-space: nowrap; }
+  tr:nth-child(even) td { background: #fafbfd; }
+  tr:hover td { background: #f2f7fd; }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 12px; background: #eef2f7; border: 1px solid #e0e7f0; border-radius: 3px; padding: 1px 5px; color: #c0392b; word-break: break-all; }
+  .commit { font-family: Menlo, Consolas, monospace; font-size: 11px; color: #8a97a5; white-space: nowrap; }
+  .vp { color: #1e6b45; }
+  .note { background: #fffaf0; border: 1px solid #f2e0b8; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #7a5b13; margin-top: 14px; }
+  .note b { color: #5d4408; }
+  ul { padding-left: 18px; }
+  li { margin-bottom: 3px; }
+  .footer { text-align: center; color: #a5b0bc; font-size: 12px; margin-top: 30px; }
+  @media print { body { background: #fff; padding: 0; } .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="card">
+    <h1>TCS 后端功能改动清单（测试交接）</h1>
+    <div class="sub">分支 feat-xxx261113 · 基线 origin/master · 出稿 2026-11-17</div>
+    <div class="chips">
+      <span class="chip">提交 16 个（有效功能提交 11 个）</span>
+      <span class="chip">改动 21 个文件（+531 / −235）</span>
+      <span class="chip ok">零 migrate</span>
+      <span class="chip ok">零 env 新增</span>
+      <span class="chip ok">零新增定时任务</span>
+      <span class="chip warn">纯查询 / 展示 / 判定链改动为主</span>
+    </div>
+    <div class="note">
+      <b>测试重点提示：</b>① 全站 VIN 均改为脱敏展示，凡列表含 VIN 的页面都过一遍；② 报表明细「18位码」换字段后，
+      <b>测试库无 TQMP 码数据时该列恒为「-」属预期</b>，不代表功能异常；③ 专营店列请挑「新旧专营店列值不一致」的历史数据验证回退逻辑，用全量新数据的问卷会漏测。
+    </div>
+  </div>
+
+  <div class="card">
+
+    <h2>一、VIN / 手机号安全治理 <span class="tag">跨多页面的横向改造</span></h2>
+    <table>
+      <tr><th style="width:40px">序号</th><th style="width:130px">改动点</th><th>说明</th><th style="width:180px">涉及页面 / 接口</th><th style="width:260px">验证要点</th><th style="width:90px">提交</th></tr>
+      <tr>
+        <td class="no">1</td>
+        <td class="mod">VIN 展示统一脱敏</td>
+        <td>VIN 脱敏中间 4-7 位（保留前 4 后 4），铺满全站列表与导出：问卷报表明细、客户表明细、其它问题表明细、答卷审核、积分、问卷任务列表、统计、推送记录导出、设备风险日志等 16 处。</td>
+        <td>所有含 VIN 列的后台列表页与 CSV 导出</td>
+        <td class="vp"><ul>
+          <li>各列表 VIN 显示形如 <code>LFV2ABxx…1234</code>（中间打码）</li>
+          <li>导出 CSV 同样脱敏</li>
+        </ul></td>
+        <td class="commit">c93a4d79<br>39113212</td>
+      </tr>
+      <tr>
+        <td class="no">2</td>
+        <td class="mod">VIN token 加密下钻</td>
+        <td>列表只返回「脱敏 VIN + 加密 token」；统计页下钻接口（按 VIN 查推送/点评明细）改为回传 token，后端解密还原完整 VIN 精确查询。兼容旧调用直接传 17 位完整 VIN。</td>
+        <td>统计页 VIN 下钻接口</td>
+        <td class="vp"><ul>
+          <li>列表点下钻能正常打开明细（token 解密链路通）</li>
+          <li>直接拼 17 位完整 VIN 的旧入口仍可用</li>
+          <li>传非法 token 报「VIN参数无效」</li>
+        </ul></td>
+        <td class="commit">39113212</td>
+      </tr>
+      <tr>
+        <td class="no">3</td>
+        <td class="mod">VIN / 手机号前缀模糊查询</td>
+        <td>筛选由精确等值改为「前缀模糊」（关键字%）：输入 VIN 或手机号前几位即可命中；其余筛选字段仍为等值匹配。报表明细页 VIN 同样走前缀模糊。</td>
+        <td>问卷任务列表、重发记录、统计、积分、答卷审核、报表明细等筛选</td>
+        <td class="vp"><ul>
+          <li>输入完整值：照常命中</li>
+          <li>输入前 6~10 位：能模糊命中</li>
+          <li>输入中段/后缀：不命中（仅前缀匹配，属预期）</li>
+        </ul></td>
+        <td class="commit">56be382b</td>
+      </tr>
+    </table>
+
+    <h2>二、问卷报表明细 <span class="tag">列表 + CSV 导出</span></h2>
+    <table>
+      <tr><th style="width:40px">序号</th><th style="width:130px">改动点</th><th>说明</th><th style="width:180px">涉及页面 / 接口</th><th style="width:260px">验证要点</th><th style="width:90px">提交</th></tr>
+      <tr>
+        <td class="no">4</td>
+        <td class="mod">表头对齐前端 25 列</td>
+        <td>列表列定义与 CSV 导出列同步改为 25 列（固定 16 + 动态 6 + 保留 3）：方案ID、问卷类型前移；文案对齐（调研mis→MIS、VIN码→VIN 等）；区域四列顺序改为 大区→小区→省→市。两份列定义逐列一致。</td>
+        <td>问卷报表明细 列表 / CSV 导出</td>
+        <td class="vp"><ul>
+          <li>列表表头与前端设计稿一致（25 列）</li>
+          <li>CSV 导出列顺序、文案与页面完全一致</li>
+        </ul></td>
+        <td class="commit">9e204994<br>6f47ad61</td>
+      </tr>
+      <tr>
+        <td class="no">5</td>
+        <td class="mod">问卷类型筛选</td>
+        <td>新增按问卷类型（NPS/CCS/ADAS/专项等）筛选；「问卷类型」纳入有效查询条件白名单（只选类型也会触发查询）。软删问卷的历史答卷仍按真实类型归类。</td>
+        <td>问卷报表明细 筛选区</td>
+        <td class="vp"><ul>
+          <li>按类型筛选结果正确（只含该类型问卷）</li>
+          <li>只选类型、不选其它条件也能出数（F05 白名单生效）</li>
+          <li>选「全部」＝不传，行为不变</li>
+        </ul></td>
+        <td class="commit">f2aade3d</td>
+      </tr>
+      <tr>
+        <td class="no">6</td>
+        <td class="mod">18位码换字段<br><code>car_code_tqmp</code></td>
+        <td>「18位码」列由车型配置码 <code>car_config_code</code>（16~21 位、非严格 18 位）统一改绑 <code>car_code_tqmp</code>（TQMP vehicle_code_18，恒 18 位），与客户表明细、其它问题表明细、18位码筛选参数同源。</td>
+        <td>问卷报表明细 列表「18位码」列 / CSV</td>
+        <td class="vp"><ul>
+          <li>TQMP 推送数据（有逐VIN落码）显示 18 位码</li>
+          <li><b>非 TQMP 数据显示「-」属预期</b>（测试库可能全为 -）</li>
+          <li>18位码筛选与列值同源，筛出的行该列必有值</li>
+        </ul></td>
+        <td class="commit">7aa42d68</td>
+      </tr>
+      <tr>
+        <td class="no">7</td>
+        <td class="mod">专营店绑回退键<br><code>dealer_name</code></td>
+        <td>「专营店名称」改绑装饰键 <code>dealer_name</code>：新列空时自动回退旧列（新列空、旧列有值的存量行此前导出恒「-」）。CSV 与列表同源。</td>
+        <td>问卷报表明细 列表 / CSV</td>
+        <td class="vp"><ul>
+          <li>页面有值的行，CSV 同样有值（不再恒「-」）</li>
+          <li>⚠️ 挑「新旧专营店列值不对称」的数据验，全量新数据的问卷测不出回退</li>
+        </ul></td>
+        <td class="commit">7aa42d68</td>
+      </tr>
+      <tr>
+        <td class="no">8</td>
+        <td class="mod">导出列与页面对齐</td>
+        <td>CSV 去掉「车系名称 / 点评方式 / 推送时间 / 交车日期」，新增「问卷类型」（中文）；上传题答案在 CSV 转可读文本。</td>
+        <td>问卷报表明细 CSV 导出</td>
+        <td class="vp"><ul>
+          <li>被去掉的 4 列不再出现；「问卷类型」显示中文</li>
+          <li>含上传题（图片+文字）的答卷导出内容可读</li>
+        </ul></td>
+        <td class="commit">6f47ad61</td>
+      </tr>
+    </table>
+
+    <h2>三、客户表明细 <span class="tag">列表 + 表头接口 + CSV</span></h2>
+    <table>
+      <tr><th style="width:40px">序号</th><th style="width:130px">改动点</th><th>说明</th><th style="width:180px">涉及页面 / 接口</th><th style="width:260px">验证要点</th><th style="width:90px">提交</th></tr>
+      <tr>
+        <td class="no">9</td>
+        <td class="mod">NPS 联合列模式</td>
+        <td>查询条件只传 type=4（NPS）、且未选问卷/车系/维度树时，动态表头切换为「联合列」：所有 NPS 问卷的第一层题目按<b>题面去重</b>出列（t0、t1…），行值按题面装配。</td>
+        <td>客户表明细 列表（动态表头）</td>
+        <td class="vp"><ul>
+          <li>只传 type=4：动态列为 t0/t1/…，相同题面只出一列，各卷答案正确对位</li>
+          <li>同时选了问卷/车系/树：回到原有按问卷出列模式，不受影响</li>
+          <li>装配值不再恒「-」（键前缀修复）</li>
+        </ul></td>
+        <td class="commit">1afc5842<br>38ef5da2</td>
+      </tr>
+      <tr>
+        <td class="no">10</td>
+        <td class="mod">去掉奖励三列</td>
+        <td>按业务要求，客户表不再提供奖励发放信息：去掉「是否已成功发放点评奖励 / 发放点评奖励时间 / 发放奖励失败原因」三列，现共 17 列。</td>
+        <td>客户表明细 表头 / 列表 / CSV</td>
+        <td class="vp"><ul>
+          <li>表头接口与列表、CSV 三处均无奖励三列</li>
+          <li>其余列不受影响</li>
+        </ul></td>
+        <td class="commit">5e235ff4</td>
+      </tr>
+    </table>
+
+    <h2>四、答卷审核 <span class="tag">已审核列表 + 导出</span></h2>
+    <table>
+      <tr><th style="width:40px">序号</th><th style="width:130px">改动点</th><th>说明</th><th style="width:180px">涉及页面 / 接口</th><th style="width:260px">验证要点</th><th style="width:90px">提交</th></tr>
+      <tr>
+        <td class="no">11</td>
+        <td class="mod">补充时长基线字段</td>
+        <td>已审核列表补齐 v225 经验百分位相关 10 个字段（与未审核列表一致）：时长四态、阈值上下限、时长分位、基线样本量、基线状态、基线来源、规则版本等。旧记录（percentile_v2 之前判定）这些字段为空，前端按空处理。</td>
+        <td>答卷审核 · 已审核列表</td>
+        <td class="vp"><ul>
+          <li>percentile_v2 判定的记录：新字段有值且与未审核口径一致</li>
+          <li>老记录：新字段为空，页面不报错</li>
+        </ul></td>
+        <td class="commit">854fa039</td>
+      </tr>
+      <tr>
+        <td class="no">12</td>
+        <td class="mod">导出列对齐页面</td>
+        <td>导出去掉「门店编码 / 时长四态 / 时长分位(P)」三列，与页面展示对齐。</td>
+        <td>答卷审核 CSV 导出</td>
+        <td class="vp"><ul>
+          <li>导出不再含上述三列，其余列正常</li>
+        </ul></td>
+        <td class="commit">6f47ad61</td>
+      </tr>
+    </table>
+
+    <h2>五、设备风险 v2.3.3 <span class="tag">判定链 · 后台无独立页面</span></h2>
+    <table>
+      <tr><th style="width:40px">序号</th><th style="width:130px">改动点</th><th>说明</th><th style="width:180px">涉及页面 / 接口</th><th style="width:260px">验证要点</th><th style="width:90px">提交</th></tr>
+      <tr>
+        <td class="no">13</td>
+        <td class="mod">异常当天回刷</td>
+        <td>某设备答卷被判「设备异常」后，该设备<b>当天（00:00–24:00）已提交的全部答卷</b>一并标记异常（不再限同问卷类型/同MIS/同客户）。只改风险值（device_risk_status），不改人审状态、不写设备库、不续期管控；回刷失败只记日志、不影响本次判定。当天之后的答卷由设备库管控直接判异常。</td>
+        <td>答卷提交链路（无独立后台页面，通过答卷审核列表的风险状态观察）</td>
+        <td class="vp"><ul>
+          <li>同设备当天多份答卷：第 2 份触发后，回看当天第 1 份风险值也变异常</li>
+          <li>昨天的答卷不被回刷（仅当天）</li>
+          <li>首份正常、不回刷历史（v3 原有口径不变）</li>
+        </ul></td>
+        <td class="commit">1afc5842</td>
+      </tr>
+    </table>
+
+    <h2>六、枚举文案 <span class="tag">全局</span></h2>
+    <table>
+      <tr><th style="width:40px">序号</th><th style="width:130px">改动点</th><th>说明</th><th style="width:180px">涉及页面 / 接口</th><th style="width:260px">验证要点</th><th style="width:90px">提交</th></tr>
+      <tr>
+        <td class="no">14</td>
+        <td class="mod">「其它」→「其他」</td>
+        <td>问卷类型 type=0 的显示文案由「其它」改为「其他」（后端枚举统一，各处问卷类型下拉/列展示随之变化）。</td>
+        <td>各处问卷类型展示（报表/客户表筛选与列、任务相关页面）</td>
+        <td class="vp"><ul>
+          <li>type=0 问卷显示「其他」</li>
+        </ul></td>
+        <td class="commit">1e10c54a</td>
+      </tr>
+    </table>
+
+    <div class="note" style="margin-top:20px">
+      <b>回归提醒：</b>① 报表明细与客户表明细是本批改动最集中的两页，列表 / 表头接口 / CSV 三视图建议同条件对照验证；
+      ② VIN 脱敏为全站横向改动，除上述重点页外，顺手过一遍其它含 VIN 的页面即可；
+      ③ 无数据库变更、无新增定时任务、无环境变量，测试环境发版后即生效。
+    </div>
+
+  </div>
+
+  <div class="footer">feat-xxx261113 · 出稿 2026-11-17 · 后端测试交接用</div>
+</div>
+</body>
+</html>
