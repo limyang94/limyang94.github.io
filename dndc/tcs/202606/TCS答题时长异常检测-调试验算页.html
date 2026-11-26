@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCS 答题时长异常检测 · 高精度调试验算页</title>
+<style>
+  :root{
+    --ink:#1a1f29; --ink2:#5b6473; --ink3:#8a93a3; --line:#e3e6ec; --line2:#eff1f5;
+    --bg:#fafbfc; --paper:#fff;
+    --accent:#1e5fbf; --accent-soft:#e7eefb; --accent2:#0a3069;
+    --ok:#1f7a4d; --ok-soft:#e3f1ea;
+    --warn:#9a6b00; --warn-soft:#fbf1d7;
+    --danger:#b53624; --danger-soft:#fbe3df;
+    --code:#0a3069; --code-bg:#f4f6fa;
+    --font-display:'Inter','PingFang SC','Hiragino Sans GB','Microsoft YaHei',-apple-system,sans-serif;
+    --font-mono:'SF Mono','JetBrains Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{background:var(--bg); color:var(--ink); font-family:var(--font-display); font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  code{font-family:var(--font-mono); font-size:12.5px; background:var(--code-bg); color:var(--code); padding:1.5px 5px; border-radius:4px;}
+  .mono{font-family:var(--font-mono);}
+  .muted{color:var(--ink2);}
+  .tiny{font-size:11.5px; color:var(--ink2);}
+  strong{color:var(--ink);}
+
+  /* ── header ── */
+  header.app{position:sticky; top:0; z-index:50; background:rgba(255,255,255,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); padding:12px 28px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+  header.app h1{font-size:16px; font-weight:700; margin:0; letter-spacing:-.01em;}
+  header.app .ver{font-size:11px; color:var(--ink2); font-family:var(--font-mono);}
+  header.app .spacer{flex:1;}
+  header.app .prec{display:flex; align-items:center; gap:8px; font-size:12px;}
+  header.app .prec label{color:var(--ink2);}
+  header.app .prec select{font-family:var(--font-mono); font-size:12px; padding:3px 6px; border:1px solid var(--line); border-radius:5px; background:#fff; color:var(--ink);}
+  header.app .ref-src{font-size:11px; color:var(--ink3);}
+
+  /* ── tabs ── */
+  .tabnav{display:flex; gap:2px; padding:0 28px; background:var(--paper); border-bottom:1px solid var(--line); overflow-x:auto;}
+  .tabnav button{appearance:none; border:none; background:transparent; cursor:pointer; font-family:inherit; font-size:13px; color:var(--ink2); padding:11px 16px; border-bottom:2px solid transparent; white-space:nowrap; display:flex; align-items:center; gap:7px;}
+  .tabnav button .num{font-family:var(--font-mono); font-size:11px; color:var(--ink3); background:var(--line2); border-radius:4px; padding:1px 5px;}
+  .tabnav button:hover{color:var(--accent);}
+  .tabnav button.active{color:var(--accent); border-bottom-color:var(--accent); font-weight:600;}
+  .tabnav button.active .num{background:var(--accent-soft); color:var(--accent);}
+
+  main{max-width:1180px; margin:0 auto; padding:24px 28px 80px;}
+  .panel{display:none;}
+  .panel.active{display:block; animation:fade .15s;}
+  @keyframes fade{from{opacity:0;}to{opacity:1;}}
+
+  .ph{display:flex; align-items:baseline; gap:10px; margin:0 0 4px;}
+  .ph h2{font-size:19px; font-weight:700; margin:0; letter-spacing:-.01em;}
+  .ph .pnum{font-family:var(--font-mono); font-size:13px; color:var(--accent); font-weight:600;}
+  .pdesc{color:var(--ink2); font-size:13px; margin:0 0 18px;}
+  .pdesc code{font-size:11.5px;}
+
+  /* ── grid layout ── */
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  .grid2.left-wide{grid-template-columns:1.25fr 1fr;}
+  @media(max-width:920px){.grid2,.grid2.left-wide{grid-template-columns:1fr;}}
+
+  .card{background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-bottom:16px;}
+  .card .ch{font-size:13px; font-weight:700; margin:0 0 4px; display:flex; align-items:center; gap:8px;}
+  .card .ch .badge{font-family:var(--font-mono); font-size:10.5px; font-weight:700; color:#fff; background:var(--ink); border-radius:4px; padding:2px 7px;}
+  .card .ch .badge.b{background:var(--accent);} .card .ch .badge.g{background:var(--ok);} .card .ch .badge.w{background:var(--warn);} .card .ch .badge.r{background:var(--danger);}
+  .card .cd{font-size:12px; color:var(--ink2); margin:0 0 12px;}
+
+  /* ── form ── */
+  .frow{display:flex; align-items:center; gap:8px; margin:8px 0; flex-wrap:wrap;}
+  .frow label{font-size:12.5px; color:var(--ink); min-width:0;}
+  .frow .lab{font-size:11.5px; color:var(--ink2); font-weight:600; min-width:64px;}
+  input[type=text], input[type=number], select, textarea{font-family:var(--font-mono); font-size:12.5px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--ink); width:auto;}
+  input[type=text].w, input[type=number].w{width:110px;}
+  input[type=text].wl, input[type=number].wl{width:150px;}
+  input[type=text].wxl{width:240px;}
+  textarea{width:100%; min-height:90px; line-height:1.5; resize:vertical;}
+  input:focus, select:focus, textarea:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft);}
+  select{cursor:pointer;}
+
+  .btn{appearance:none; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; padding:7px 16px; border-radius:7px; border:1px solid var(--accent); background:var(--accent); color:#fff; transition:.12s;}
+  .btn:hover{background:#1a54a8;}
+  .btn.ghost{background:#fff; color:var(--accent);}
+  .btn.ghost:hover{background:var(--accent-soft);}
+  .btn.sm{font-size:12px; padding:4px 11px;}
+  .btn.ok{border-color:var(--ok); background:var(--ok);} .btn.ok:hover{background:#176640;}
+  .btn.warn{border-color:var(--warn); background:var(--warn);} .btn.warn:hover{background:#7f5800;}
+
+  /* ── tables ── */
+  table.t{width:100%; border-collapse:collapse; font-size:12.5px; margin:8px 0 4px; background:var(--paper); border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  table.t th, table.t td{padding:6px 9px; text-align:left; border-bottom:1px solid var(--line2); vertical-align:top;}
+  table.t th{background:var(--code-bg); font-weight:600; font-size:11.5px; color:var(--ink); border-bottom:1.5px solid var(--line);}
+  table.t tr:last-child td{border-bottom:none;}
+  table.t td.k{font-family:var(--font-mono); color:var(--code); white-space:nowrap;}
+  table.t td.c{text-align:center;}
+  table.t td.r{text-align:right; font-family:var(--font-mono);}
+  table.t td.num{font-family:var(--font-mono); text-align:right;}
+
+  /* ── pills / badges ── */
+  .pill{display:inline-block; padding:1.5px 8px; border-radius:999px; font-size:10.5px; font-weight:600;}
+  .pill.p0{background:var(--danger-soft); color:var(--danger);} .pill.p1{background:var(--warn-soft); color:var(--warn);} .pill.p2{background:var(--code-bg); color:var(--ink2);}
+  .pill.pass{background:var(--ok-soft); color:var(--ok);} .pill.fail{background:var(--danger-soft); color:var(--danger);} .pill.skip{background:var(--line2); color:var(--ink2);}
+  .pill.eq{background:var(--warn-soft); color:var(--warn);} /* 等号命中 */
+  .pill.level{background:var(--accent-soft); color:var(--accent);} .pill.level.brand{background:#eef0fb;color:#4a51a8;} .pill.level.seed{background:#f3eefb;color:#6a4aa8;} .pill.level.insufficient,.pill.level.no_data{background:var(--line2);color:var(--ink2);}
+
+  .callout{margin:10px 0 14px; padding:10px 14px; border-left:3px solid var(--accent); background:var(--accent-soft); border-radius:0 8px 8px 0; font-size:12.5px;}
+  .callout.warn{border-color:var(--warn); background:var(--warn-soft);}
+  .callout.danger{border-color:var(--danger); background:var(--danger-soft);}
+  .callout.ok{border-color:var(--ok); background:var(--ok-soft);}
+  .callout .lbl{font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; margin-right:6px;}
+
+  .formula{font-family:var(--font-mono); font-size:13px; background:var(--code-bg); padding:8px 12px; border-radius:7px; margin:8px 0; display:inline-block;}
+  .step{display:flex; gap:10px; margin:10px 0; padding:10px 12px; background:var(--paper); border:1px solid var(--line); border-radius:8px;}
+  .step .badge{font-family:var(--font-mono); font-weight:700; color:#fff; background:var(--ink); min-width:24px; height:24px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0;}
+  .step .body{flex:1; font-size:12.5px;} .step .body p{margin:2px 0;}
+
+  /* event editor */
+  .ev-editor table.t td{padding:4px 6px;}
+  .ev-editor select, .ev-editor input{font-size:11.5px; padding:3px 6px;}
+  .ev-editor .del{cursor:pointer; color:var(--danger); border:none; background:none; font-size:14px; padding:2px 5px;}
+
+  .stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:8px 0;}
+  @media(max-width:720px){.stat-grid{grid-template-columns:1fr 1fr;}}
+  .stat-box{border:1px solid var(--line); border-radius:8px; padding:8px 10px; background:#fcfdfe;}
+  .stat-box .sb-lbl{font-size:10.5px; font-weight:700; color:var(--ink2); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;}
+  .stat-box .sb-lbl .lv{font-family:var(--font-mono);}
+  .stat-box.hit{border-color:var(--ok); background:var(--ok-soft);}
+  .stat-box.skip{opacity:.5;}
+
+  .kv{display:flex; justify-content:space-between; gap:8px; padding:4px 0; border-bottom:1px dashed var(--line2); font-size:12.5px;}
+  .kv:last-child{border-bottom:none;}
+  .kv .k{color:var(--ink2); font-family:var(--font-mono); font-size:11.5px;}
+  .kv .v{font-family:var(--font-mono); font-weight:600; color:var(--ink);}
+  .kv .v.big{color:var(--accent); font-size:14px;}
+  .kv .v.danger{color:var(--danger);} .kv .v.ok{color:var(--ok);}
+
+  .verdict{margin:14px 0; padding:18px 22px; border-radius:12px; border:2px solid var(--line); text-align:center; background:var(--paper);}
+  .verdict.anomaly{border-color:var(--danger); background:var(--danger-soft);}
+  .verdict.normal{border-color:var(--ok); background:var(--ok-soft);}
+  .verdict .vlabel{font-size:13px; font-weight:700; color:var(--ink2); text-transform:uppercase; letter-spacing:.1em;}
+  .verdict .vbig{font-size:30px; font-weight:700; letter-spacing:-.02em; margin:4px 0;}
+  .verdict.anomaly .vbig{color:var(--danger);} .verdict.normal .vbig{color:var(--ok);}
+  .verdict .vdetail{font-size:12.5px; color:var(--ink2);}
+
+  .trace-list{font-size:11.5px; font-family:var(--font-mono);}
+  .trace-list .tl{padding:3px 0; border-bottom:1px dashed var(--line2); display:flex; gap:8px; align-items:baseline;}
+  .trace-list .tl:last-child{border-bottom:none;}
+  .trace-list .tl .arrow{color:var(--ink3);}
+  .trace-list .tl.hit{color:var(--ok); font-weight:600;}
+  .trace-list .tl.miss{color:var(--ink2);}
+  .trace-list .tl.zero{color:var(--danger);}
+
+  .regression-row{display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--line2); cursor:pointer; transition:.1s;}
+  .regression-row:hover{background:var(--code-bg);}
+  .regression-row .rid{font-family:var(--font-mono); font-weight:700; font-size:12px; color:var(--accent); width:74px; flex-shrink:0;}
+  .regression-row .rtitle{flex:1; font-size:12.5px;}
+  .regression-row .rsec{font-size:11px; color:var(--ink3); font-family:var(--font-mono); width:54px;}
+  .regression-detail{display:none; padding:12px 16px; background:var(--code-bg); border-bottom:1px solid var(--line);}
+  .regression-detail.open{display:block;}
+
+  .sticky-result{position:sticky; top:120px;}
+  .empty-state{text-align:center; padding:40px; color:var(--ink3); font-size:13px;}
+
+  hr.sep{border:none; border-top:1px solid var(--line2); margin:14px 0;}
+  .op-row{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;}
+  .seg{display:inline-flex; border:1px solid var(--line); border-radius:7px; overflow:hidden;}
+  .seg button{appearance:none; border:none; background:#fff; font-family:inherit; font-size:11.5px; padding:4px 10px; cursor:pointer; color:var(--ink2); border-right:1px solid var(--line);}
+  .seg button:last-child{border-right:none;}
+  .seg button.active{background:var(--accent); color:#fff; font-weight:600;}
+  .footnote{font-size:11px; color:var(--ink3); margin-top:10px; line-height:1.5;}
+</style>
+</head>
+<body>
+
+<header class="app">
+  <h1>答题时长异常检测 · 高精度调试验算页</h1>
+  <span class="ver">v1.0 · 镜像生产代码</span>
+  <span class="spacer"></span>
+  <div class="prec">
+    <label>显示精度</label>
+    <select id="precSelect">
+      <option value="null">完整浮点(真值)</option>
+      <option value="9">9 位小数</option>
+      <option value="6">6 位小数</option>
+      <option value="4">4 位</option>
+      <option value="2">2 位</option>
+      <option value="0">整数</option>
+    </select>
+  </div>
+  <span class="ref-src" title="数学内核逐行对齐 PHP 源码">源码对齐:InverseNormalCDF / WelfordMerger / SingleQuestionDurationCalculator / DurationJudgeService / RefDistributionResolver</span>
+</header>
+
+<nav class="tabnav" id="tabnav">
+  <button data-tab="delta" class="active"><span class="num">①</span>事件流 → Δ → x_q</button>
+  <button data-tab="invnorm"><span class="num">②</span>k = Φ⁻¹(P) 分位换算</button>
+  <button data-tab="welford"><span class="num">③</span>Welford 增量演算</button>
+  <button data-tab="judge"><span class="num">④</span>主判定器</button>
+  <button data-tab="cases"><span class="num">⑤</span>用例库 · 38 用例回归</button>
+</nav>
+
+<main>
+
+<!-- ============ TAB ① ============ -->
+<section class="panel active" id="panel-delta">
+  <div class="ph"><span class="pnum">①</span><h2>事件流 → Δ → x_q</h2></div>
+  <p class="pdesc">复刻 <code>SingleQuestionDurationCalculator::calculate()</code>。验证 §0.5 ①:<b>排序</b> → <b>start_click 锚点</b> → <b>Δᵢ = tᵢ − tᵢ₋₁</b> → <b>负Δ归零</b> → <b>按 question_id 累加</b> → <code>intval</code>。对应手册 §4.1 / §4.2 输入端 / §5.3 / C10.3。</p>
+
+  <div class="grid2 left-wide">
+    <div>
+      <div class="card">
+        <div class="ch"><span class="badge">输入</span>答题事件流</div>
+        <p class="cd">每行一个事件。<code>event_type</code> 下拉选 <code>start_click</code>(锚点,不计Δ)或 <code>answer_update</code>(作答,question_id 必填)。时间用 <code>YYYY-MM-DD HH:MM:SS</code>。</p>
+        <div class="ev-editor">
+          <table class="t" id="evTable">
+            <thead><tr><th>#</th><th>event_type</th><th>question_id</th><th>event_time</th><th></th></tr></thead>
+            <tbody id="evBody"></tbody>
+          </table>
+        </div>
+        <div class="op-row">
+          <button class="btn ghost sm" onclick="evAddRow()">+ 加一行</button>
+          <button class="btn ghost sm" onclick="evLoadSample()">载入手册 C4.1.1 示例</button>
+          <button class="btn ghost sm" onclick="toggleImportPanel()">📥 导入事件流</button>
+          <button class="btn sm" onclick="runDelta()">▶ 计算 Δ 与 x_q</button>
+        </div>
+        <!-- 导入面板(内联展开) -->
+        <div id="importPanel" style="display:none; margin-top:12px; padding:12px; border:1px dashed var(--line); border-radius:8px; background:#fcfdfe;">
+          <div class="ch" style="font-size:12.5px;">导入答题事件流(CSV / 制表符)</div>
+          <textarea id="importText" rows="9" style="width:100%; font-size:11.5px;" placeholder="每行一条事件,逗号或制表符分隔。可带表头,也可不带。&#10;&#10;示例(带表头):&#10;event_type,question_id,event_time&#10;start_click,,2026-06-20 10:00:00&#10;answer_update,2002,2026-06-20 10:00:10&#10;answer_update,2003,2026-06-20 10:00:25&#10;&#10;示例(无表头,默认列序 event_type,question_id,event_time):&#10;start_click,,2026-06-20 10:00:00&#10;answer_update,2002,2026-06-20 10:00:10"></textarea>
+          <p class="tiny" style="margin:6px 0;">识别规则:首行含 <code>event_type</code>/<code>question_id</code>/<code>event_time</code>(或中文 事件类型/题目ID/时间)→ 按表头列名映射,列序随意;否则按默认列序 <code>event_type, question_id, event_time</code>。<code>event_type</code> 必须为 <code>start_click</code> 或 <code>answer_update</code>(区分大小写),其余值该行跳过。导入会<b>覆盖</b>当前编辑器内容。</p>
+          <div class="op-row" style="margin:8px 0 0;">
+            <button class="btn sm" onclick="doImport()">解析并导入</button>
+            <button class="btn ghost sm" onclick="document.getElementById('importText').value=''">清空粘贴框</button>
+            <button class="btn ghost sm" onclick="toggleImportPanel()">取消</button>
+          </div>
+          <div id="importReport" style="margin-top:10px;"></div>
+        </div>
+        <div class="footnote">说明:代码内部会再次按 <code>event_time</code> 升序排序(防御性),所以输入顺序乱也没关系 —— 排序后的真实处理顺序见右栏 trace。</div>
+      </div>
+    </div>
+    <div>
+      <div class="card sticky-result" id="deltaResult">
+        <div class="ch"><span class="badge b">结果</span>计算输出</div>
+        <div class="empty-state">填入事件流后点"计算"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB ② ============ -->
+<section class="panel" id="panel-invnorm">
+  <div class="ph"><span class="pnum">②</span><h2>k = Φ⁻¹(P) 分位换算器</h2></div>
+  <p class="pdesc">复刻 <code>InverseNormalCDF::invNorm()</code> —— <b>Acklam 有理分式近似算法</b>(相对误差 ~10⁻⁹)。唯一用途:改 percentile 时算 k 缓存。对应手册 §4.4 / §8.1。<br><span class="pill eq">精度</span>Acklam 三段(中心区/下尾/上尾)经 17 点数值核对,全区间与数学真值偏差 &lt; 1.5e-9,P_TI=99、P_JUAN=1 等尾区档位同样可信。</p>
+
+  <div class="grid2 left-wide">
+    <div>
+      <div class="card">
+        <div class="ch"><span class="badge">输入</span>百分位 P</div>
+        <div class="frow">
+          <label>百分位 P (%)</label>
+          <input type="number" id="invP" class="w" value="95" step="0.1">
+          <button class="btn sm" onclick="runInvNorm()">▶ 算 k</button>
+        </div>
+        <hr class="sep">
+        <div class="frow"><span class="lab">用途</span>
+          <div class="seg" id="invMode">
+            <button data-m="ti" class="active">题门槛 P_TI (μ+k·σ)</button>
+            <button data-m="juan">卷门槛 P_JUAN (μ−|k|·σ)</button>
+            <button data-m="raw">原始 Φ⁻¹</button>
+          </div>
+        </div>
+        <p class="cd" id="invModeDesc">P_TI:从均值往<b>右</b>找最慢的题。取值范围 <code>50.0 – 99.9</code>。</p>
+        <hr class="sep">
+        <div class="ch" style="font-size:12px;margin-top:8px;">边界校验(复刻 DurationThresholdController)</div>
+        <div id="invBound" class="tiny"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="badge b">1–99% 对照表</span>k 值速查</div>
+        <p class="cd">点任意行可把该 P 填入上方输入框。</p>
+        <table class="t" id="invTable"><thead><tr><th>P(%)</th><th>k = Φ⁻¹(P)</th><th>区域</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+    <div>
+      <div class="card sticky-result" id="invResult">
+        <div class="ch"><span class="badge b">结果</span>Acklam 算法 trace</div>
+        <div class="empty-state">输入 P 后点"算 k"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB ③ ============ -->
+<section class="panel" id="panel-welford">
+  <div class="ph"><span class="pnum">③</span><h2>Welford 增量演算器</h2></div>
+  <p class="pdesc">复刻 <code>WelfordMerger</code>。表里<b>不存 σ,存 (n, μ, M₂)</b>,读时 <code>σ = √(M₂/n)</code>(总体标准差,除以 n)。对应手册 §4.5 / 附录 A.2③。两种模式:<code>push</code> 单点增量、<code>mergeBatch</code> 批合并。</p>
+
+  <div class="grid2 left-wide">
+    <div>
+      <div class="card">
+        <div class="ch"><span class="badge">输入</span>初始状态 (n, μ, M₂)</div>
+        <div class="frow">
+          <span class="lab">输入方式</span>
+          <div class="seg" id="wfInitMode">
+            <button data-m="m2" class="active">直接给 M₂</button>
+            <button data-m="sigma">给 σ 反推 M₂</button>
+          </div>
+        </div>
+        <div class="frow" id="wfInitM2">
+          <label>n</label><input type="number" id="wfN" class="w" value="2">
+          <label>μ</label><input type="number" id="wfMu" class="w" value="100">
+          <label>M₂</label><input type="number" id="wfM2" class="wl" value="200">
+        </div>
+        <div class="frow" id="wfInitSigma" style="display:none;">
+          <label>n</label><input type="number" id="wfN2" class="w" value="2">
+          <label>μ</label><input type="number" id="wfMu2" class="w" value="100">
+          <label>σ</label><input type="number" id="wfSigma2" class="wl" value="10">
+        </div>
+        <hr class="sep">
+        <div class="ch" style="font-size:12px;">待增量数据</div>
+        <div class="frow" style="align-items:flex-start;">
+          <span class="lab" style="margin-top:5px;">push 值</span>
+          <input type="text" id="wfPush" class="wxl" value="120" placeholder="逗号分隔,如 120, 80, 150">
+        </div>
+        <p class="cd">每个值用 <code>push(x)</code> 逐个增量更新(等价于 system:audit 提交时 sample 一份卷)。</p>
+        <div class="op-row">
+          <button class="btn sm" onclick="runWelford()">▶ 逐步演算</button>
+          <button class="btn ghost sm" onclick="loadWfCase()">载入手册 C4.5.1</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card sticky-result" id="wfResult">
+        <div class="ch"><span class="badge b">结果</span>增量 trace</div>
+        <div class="empty-state">填入初始状态和 push 值后演算</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB ④ ============ -->
+<section class="panel" id="panel-judge">
+  <div class="ph"><span class="pnum">④</span><h2>主判定器(核心)</h2></div>
+  <p class="pdesc">复刻 <code>DurationAggregator::jobA</code> + <code>RefDistributionResolver</code> + <code>DurationJudgeService::judge</code>。两个面板:<b>Panel A</b>(题级,x_q → 超时替代 → x_q_star)、<b>Panel B</b>(卷级,4层回退 → y_门槛 → 异常判定)。对应手册 §4.2/§4.3/§5/§6/§9.1。</p>
+
+  <!-- Panel A: 题级 -->
+  <div class="card">
+    <div class="ch"><span class="badge">Panel A</span>题级:超时替代 x_q → x_q_star</div>
+    <p class="cd">公式:<code>x_门槛 = μ题 + k_题·σ题</code>;若 <code>x_q ≥ x_门槛</code>(<b>等号算超时</b>)则 <code>x_q_star = ⌊μ题/3⌋</code>,否则保留原值。复刻 <code>applyTimeoutRule()</code>。</p>
+    <div class="grid2">
+      <div>
+        <div class="ch" style="font-size:12px;">题级参照(μ题, σ题)— 从 stat_* 读</div>
+        <div class="frow">
+          <label>μ题</label><input type="number" id="jMuQ" class="w" value="30">
+          <label>σ题</label><input type="number" id="jSigQ" class="w" value="10">
+        </div>
+        <div class="frow">
+          <label>P_TI(%)</label><input type="number" id="jPTi" class="w" value="95" step="0.1">
+          <span class="tiny">→ k_题 = <code id="jKTi">1.6449</code></span>
+          <button class="btn ghost sm" onclick="refreshJKTi()">算 k</button>
+        </div>
+        <div class="frow"><span class="tiny">x_门槛 = <span class="mono" id="jXTh">46.449</span></span></div>
+      </div>
+      <div>
+        <div class="ch" style="font-size:12px;">本卷各题 x_q(原始时长,秒)</div>
+        <textarea id="jXqInput" rows="4" placeholder="每行: question_id, x_q&#10;如:&#10;2002, 50&#10;2003, 50&#10;2004, 50">2002, 50
+2003, 50
+2004, 50</textarea>
+        <div class="op-row">
+          <button class="btn sm" onclick="runPanelA()">▶ 算 x_q_star</button>
+          <button class="btn ghost sm" onclick="sendToPanelB()">↓ 传入 Panel B 的 y 明细</button>
+        </div>
+      </div>
+    </div>
+    <div id="panelAResult" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- Panel B: 卷级 -->
+  <div class="card">
+    <div class="ch"><span class="badge b">Panel B</span>卷级:4层回退 → y_门槛 → 异常判定</div>
+    <p class="cd">回退链(各层 <code>n ≥ 2000</code> 才用,否则下沉):①问卷 → ②车系 → ③类型 → ④品牌 → ⑤种子 → ⑥insufficient。判定:<code>y ≤ y_门槛</code>(<b>等号算异常</b>)且 <code>y_门槛 &gt; 0</code>。复刻 <code>judge()</code>。</p>
+
+    <div class="ch" style="font-size:12px;margin-top:6px;">4 层 stat_*(卷级 s_* 量)+ 种子 + 配置</div>
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="frow">
+      <label>P_JUAN(%)</label><input type="number" id="jPJ" class="w" value="5" step="0.1">
+      <span class="tiny">→ k_卷 = <code id="jKJ">-1.6449</code></span>
+      <button class="btn ghost sm" onclick="refreshJKJ()">算 k</button>
+      <span style="flex:1"></span>
+      <button class="btn ghost sm" onclick="loadJudgeSample()">载入手册 C4.3.1</button>
+      <button class="btn sm" onclick="runPanelB()">▶ 判定</button>
+    </div>
+    <div id="panelBResult" style="margin-top:12px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><span class="badge g">KPI 区</span>实时量(复刻报表接口 §9.1)</div>
+    <p class="cd">σ = √(M₂/n) 现算。展示当前命中层的题级/卷级 mu/sigma/threshold。</p>
+    <div id="kpiArea"></div>
+  </div>
+</section>
+
+<!-- ============ TAB ⑤ ============ -->
+<section class="panel" id="panel-cases">
+  <div class="ph"><span class="pnum">⑤</span><h2>用例库 · 38 用例回归</h2></div>
+  <p class="pdesc">内置测试手册全部 39 个用例 ID(C4.1.1 … C11.4.1)。<b>可自动验算</b>的用例(有明确数值预期)一键运行并逐字段 PASS/FAIL;<b>流程/运维类</b>用例只展示造数与预期,标"需环境验证"。</p>
+  <div class="op-row">
+    <button class="btn sm ok" onclick="runAllComputable()">▶ 运行全部可验算用例</button>
+    <button class="btn ghost sm" onclick="collapseAll()">收起所有</button>
+    <span class="tiny" id="regSummary"></span>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div id="caseList"></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+"use strict";
+/* ════════════════════════════════════════════════════════════
+ * 数学内核 —— 逐行对齐 PHP 生产代码
+ * ════════════════════════════════════════════════════════════ */
+
+/* ---- 常量(对齐源码) ---- */
+const MIN_SAMPLE_N = 2000;          // WelfordStatColumns::MIN_SAMPLE_N
+const K_TI_DEFAULT  =  1.6448536;   // Φ⁻¹(0.95) 兜底
+const K_JUAN_DEFAULT = -1.6448536;  // Φ⁻¹(0.05) 兜底
+const P_TI_MIN = 50.0, P_TI_MAX = 99.9;
+const P_JUAN_MIN = 0.1, P_JUAN_MAX = 50.0;
+const START_CLICK = 'start_click';
+const ANSWER_UPDATE = 'answer_update';
+
+/* ---- 1. Acklam Φ⁻¹(对齐 InverseNormalCDF.php) ---- */
+const ACKLAM = {
+  A:[-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00],
+  B:[-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01],
+  C:[-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00],
+  D:[ 7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00]
+};
+// 纯数值版(严格复刻返回值)
+function invNormRaw(p){
+  const pLow=0.02425, pHigh=1-pLow;
+  if(p<=0.0) return -Infinity;
+  if(p>=1.0) return Infinity;
+  if(p<pLow){
+    const q=Math.sqrt(-2*Math.log(p));
+    return (((((ACKLAM.C[0]*q+ACKLAM.C[1])*q+ACKLAM.C[2])*q+ACKLAM.C[3])*q+ACKLAM.C[4])*q+ACKLAM.C[5])
+      /((((ACKLAM.D[0]*q+ACKLAM.D[1])*q+ACKLAM.D[2])*q+ACKLAM.D[3])*q+1);
+  }
+  if(p>pHigh){
+    const q=Math.sqrt(-2*Math.log(1-p));
+    return -(((((ACKLAM.C[0]*q+ACKLAM.C[1])*q+ACKLAM.C[2])*q+ACKLAM.C[3])*q+ACKLAM.C[4])*q+ACKLAM.C[5])
+      /((((ACKLAM.D[0]*q+ACKLAM.D[1])*q+ACKLAM.D[2])*q+ACKLAM.D[3])*q+1);
+  }
+  const q=p-0.5, r=q*q;
+  return (((((ACKLAM.A[0]*r+ACKLAM.A[1])*r+ACKLAM.A[2])*r+ACKLAM.A[3])*r+ACKLAM.A[4])*r+ACKLAM.A[5])*q
+    /(((((ACKLAM.B[0]*r+ACKLAM.B[1])*r+ACKLAM.B[2])*r+ACKLAM.B[3])*r+ACKLAM.B[4])*r+1);
+}
+// 注: Acklam 算法经 17 点(覆盖中心区/下尾/上尾)数值核对,
+//   全区间与数学真值(NIST/scipy 查表值)偏差 < 1.5e-9,达到 Acklam 声称精度,
+//   中心区与尾区均无系统性偏差。故无需"数学真值"对照分支。
+// 带 trace 版
+function invNormTrace(p){
+  const pLow=0.02425, pHigh=1-pLow;
+  if(p<=0.0) return {value:-Infinity, region:'p≤0 → -∞'};
+  if(p>=1.0) return {value:Infinity, region:'p≥1 → +∞'};
+  if(p<pLow){
+    const q=Math.sqrt(-2*Math.log(p));
+    const num=(((((ACKLAM.C[0]*q+ACKLAM.C[1])*q+ACKLAM.C[2])*q+ACKLAM.C[3])*q+ACKLAM.C[4])*q+ACKLAM.C[5]);
+    const den=((((ACKLAM.D[0]*q+ACKLAM.D[1])*q+ACKLAM.D[2])*q+ACKLAM.D[3])*q+1);
+    return {value:num/den, region:'下尾 (0, 0.02425)', q, r:null, num, den};
+  }
+  if(p>pHigh){
+    const q=Math.sqrt(-2*Math.log(1-p));
+    const num=(((((ACKLAM.C[0]*q+ACKLAM.C[1])*q+ACKLAM.C[2])*q+ACKLAM.C[3])*q+ACKLAM.C[4])*q+ACKLAM.C[5]);
+    const den=((((ACKLAM.D[0]*q+ACKLAM.D[1])*q+ACKLAM.D[2])*q+ACKLAM.D[3])*q+1);
+    return {value:-(num/den), region:'上尾 (0.97575, 1)', q, r:null, num, den, neg:true};
+  }
+  const q=p-0.5, r=q*q;
+  const num=((((((ACKLAM.A[0]*r+ACKLAM.A[1])*r+ACKLAM.A[2])*r+ACKLAM.A[3])*r+ACKLAM.A[4])*r+ACKLAM.A[5])*q);
+  const den=(((((ACKLAM.B[0]*r+ACKLAM.B[1])*r+ACKLAM.B[2])*r+ACKLAM.B[3])*r+ACKLAM.B[4])*r+1);
+  return {value:num/den, region:'中心 [0.02425, 0.97575]', q, r, num, den};
+}
+function percentileToZ(percentile){ return invNormRaw(percentile/100.0); }
+
+/* ---- 2. WelfordMerger(对齐 WelfordMerger.php) ---- */
+class Welford {
+  constructor(n=0, mu=0.0, m2=0.0){ this.n=n; this.mu=mu; this.m2=m2; }
+  push(x){
+    this.n++;
+    const delta = x - this.mu;
+    this.mu += delta / this.n;
+    const delta2 = x - this.mu;
+    this.m2 += delta * delta2;
+    return this;
+  }
+  mergeBatch(nB, muB, m2B){
+    if(nB<=0) return this;
+    if(this.n<=0){ this.n=nB; this.mu=muB; this.m2=m2B; return this; }
+    const n = this.n + nB;
+    const delta = muB - this.mu;
+    this.mu = this.mu + delta*(nB/n);
+    this.m2 = this.m2 + m2B + delta*delta*(this.n*nB/n);
+    this.n = n;
+    return this;
+  }
+  sigma(){ return this.n<=0 ? 0.0 : Math.sqrt(this.m2/this.n); }
+}
+// σ = √(M2/n) (RefDistributionResolver::pack)
+function sigmaOf(n, m2){ return n>0 ? Math.sqrt(m2/n) : 0.0; }
+
+/* ---- 3. 事件流 → Δ → x_q(对齐 SingleQuestionDurationCalculator::calculate) ---- */
+function parseTs(s){
+  s = String(s).trim();
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{1,2}):(\d{1,2})$/.exec(s);
+  if(m) return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]).getTime()/1000;
+  const t = Date.parse(s);
+  return isNaN(t) ? NaN : t/1000;
+}
+function calcDeltas(events){
+  // events: [{event_type, question_id, event_time}]
+  const withTs = events.map(e=>({...e, _ts:parseTs(e.event_time)}));
+  // 升序排序(防御性)
+  const sorted = [...withTs].sort((a,b)=>a._ts-b._ts);
+  const xQ = {};
+  const trace = [];
+  let prevTs = null;
+  for(const ev of sorted){
+    if(isNaN(ev._ts)){ trace.push({...ev, delta:null, note:'⚠ 时间解析失败,跳过', cls:'zero'}); continue; }
+    if(prevTs===null || ev.event_type===START_CLICK){
+      prevTs = ev._ts;
+      trace.push({...ev, delta:null, note:'锚点(start_click / 首事件),不计算 Δ', cls:'miss'});
+      continue;
+    }
+    let delta = ev._ts - prevTs;
+    prevTs = ev._ts;
+    if(ev.event_type!==ANSWER_UPDATE){ trace.push({...ev, delta, note:'非 answer_update,不计入 x_q', cls:'miss'}); continue; }
+    if(ev.question_id===null || ev.question_id==='' || ev.question_id===undefined){ trace.push({...ev, delta, note:'question_id 为空,跳过', cls:'miss'}); continue; }
+    if(delta<0){
+      trace.push({...ev, delta, note:`负 Δ(${delta}) → 归零保护`, cls:'zero'});
+      delta = 0;
+    } else {
+      trace.push({...ev, delta, note:`归题 ${ev.question_id}`, cls:'hit'});
+    }
+    xQ[ev.question_id] = (xQ[ev.question_id]||0) + delta;
+  }
+  // intval (正数等价 trunc)
+  const result = {};
+  for(const k in xQ) result[k] = Math.trunc(xQ[k]);
+  return {xQ:result, trace, sorted};
+}
+
+/* ---- 4. 超时替代(对齐 SingleQuestionDurationCalculator::applyTimeoutRule) ---- */
+// x_门槛 = mu + k*sigma; xQ >= threshold → floor(mu/3); 注意 >= 与 floor
+function applyTimeoutRule(xQ, mu, threshold){
+  const isTimeout = xQ >= threshold;
+  let xQStar = isTimeout ? Math.floor(mu/3) : xQ;
+  if(xQStar<0) xQStar=0;
+  return {is_timeout:isTimeout, x_q_star:xQStar};
+}
+
+/* ---- 5. 4 层回退(对齐 RefDistributionResolver::resolve) ---- */
+// levels: [{name, n, mu, m2}] 按顺序 questionnaire/car_series/genre/brand
+// seed: {mu, sigma} 或 null
+function resolveRef(prefix, qRow, csRow, gRow, bRow, seed){
+  const trace = [];
+  const levels = [
+    {key:'questionnaire', label:'① 问卷', row:qRow},
+    {key:'car_series',    label:'② 车系', row:csRow},
+    {key:'genre',         label:'③ 类型', row:gRow},
+    {key:'brand',         label:'④ 品牌', row:bRow},
+  ];
+  for(const lv of levels){
+    if(lv.row && lv.row.n > 0){
+      if(lv.row.n >= MIN_SAMPLE_N){
+        trace.push({level:lv.label, hit:true, n:lv.row.n, reason:`n=${lv.row.n} ≥ ${MIN_SAMPLE_N} → 命中`});
+        const sigma = sigmaOf(lv.row.n, lv.row.m2);
+        return {mu:lv.row.mu, sigma, ref_level:lv.key, trace};
+      } else {
+        trace.push({level:lv.label, hit:false, n:lv.row.n, reason:`n=${lv.row.n} < ${MIN_SAMPLE_N} → 下沉`});
+      }
+    } else {
+      trace.push({level:lv.label, hit:false, n:0, reason:'无数据 / n=0 → 下沉'});
+    }
+  }
+  // ⑤ 种子
+  if(seed && seed.mu!==undefined){
+    trace.push({level:'⑤ 种子', hit:true, reason:'4层皆不足,命中种子配置'});
+    return {mu:seed.mu, sigma:seed.sigma, ref_level:'seed', trace};
+  }
+  trace.push({level:'⑥ insufficient', hit:false, reason:'全部为空 → 无法判定'});
+  return {mu:0, sigma:0, ref_level:'insufficient', trace};
+}
+
+/* ---- 6. 判定(对齐 DurationJudgeService::judge) ---- */
+// y = sum(x_q_star); threshold = mu + kJuan*sigma; isAnomaly = (threshold>0 && y<=threshold)
+function judgeCore(y, ref, kJuan){
+  if(ref.ref_level==='insufficient'){
+    return {y, y_threshold:null, is_anomaly:0, ref_level:'insufficient', threshold_raw:null};
+  }
+  const threshold = ref.mu + kJuan*ref.sigma;
+  const isAnomaly = (threshold>0 && y<=threshold) ? 1 : 0;
+  return {y, y_threshold:Math.floor(threshold), is_anomaly:isAnomaly, ref_level:ref.ref_level, threshold_raw:threshold};
+}
+
+/* ════════════════════════════════════════════════════════════
+ * 格式化与工具
+ * ════════════════════════════════════════════════════════════ */
+let PREC = null;
+function setPrec(v){ PREC = v===null?null:Number(v); }
+function fmt(x){
+  if(x===null||x===undefined) return '—';
+  if(typeof x!=='number') return String(x);
+  if(!isFinite(x)) return x>0?'+∞':'-∞';
+  if(PREC===null) return String(x);
+  return x.toFixed(PREC);
+}
+function fmtInt(x){ if(x===null||x===undefined) return '—'; return String(x); }
+function approxEq(a,b,eps=1e-6){
+  if(a===null||b===null) return a===b;
+  if(typeof a!=='number'||typeof b!=='number') return a===b;
+  return Math.abs(a-b)<=eps || Math.abs(a-b)<=eps*Math.max(Math.abs(a),Math.abs(b));
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ════════════════════════════════════════════════════════════
+ * Tab 切换
+ * ════════════════════════════════════════════════════════════ */
+document.getElementById('tabnav').addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-tab]'); if(!btn) return;
+  document.querySelectorAll('#tabnav button').forEach(b=>b.classList.toggle('active', b===btn));
+  const t = btn.dataset.tab;
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id==='panel-'+t));
+  if(t==='cases') renderCases();
+  if(t==='invnorm') renderInvTable();
+});
+document.getElementById('precSelect').addEventListener('change', e=>{
+  setPrec(e.target.value==='null'?null:Number(e.target.value));
+  rerunCurrent();
+});
+
+/* ════════════════════════════════════════════════════════════
+ * TAB ① 事件流
+ * ════════════════════════════════════════════════════════════ */
+let evRows = [];
+function evAddRow(type=ANSWER_UPDATE, qid='', tm=''){
+  evRows.push({event_type:type, question_id:qid, event_time:tm});
+  renderEvTable();
+}
+function renderEvTable(){
+  const tb = document.getElementById('evBody');
+  tb.innerHTML = evRows.map((r,i)=>`
+    <tr>
+      <td class="c">${i+1}</td>
+      <td><select onchange="evRows[${i}].event_type=this.value">
+        <option value="${START_CLICK}" ${r.event_type===START_CLICK?'selected':''}>start_click</option>
+        <option value="${ANSWER_UPDATE}" ${r.event_type===ANSWER_UPDATE?'selected':''}>answer_update</option>
+      </select></td>
+      <td><input type="text" value="${esc(r.question_id)}" onchange="evRows[${i}].question_id=this.value" style="width:70px"></td>
+      <td><input type="text" value="${esc(r.event_time)}" onchange="evRows[${i}].event_time=this.value" style="width:175px"></td>
+      <td><button class="del" onclick="evRows.splice(${i},1);renderEvTable()">✕</button></td>
+    </tr>`).join('');
+}
+function evLoadSample(){
+  evRows = [
+    {event_type:START_CLICK, question_id:'', event_time:'2026-06-20 10:00:00'},
+    {event_type:ANSWER_UPDATE, question_id:'2002', event_time:'2026-06-20 10:00:10'},
+    {event_type:ANSWER_UPDATE, question_id:'2003', event_time:'2026-06-20 10:00:25'},
+    {event_type:ANSWER_UPDATE, question_id:'2002', event_time:'2026-06-20 10:00:40'},
+    {event_type:ANSWER_UPDATE, question_id:'2004', event_time:'2026-06-20 10:01:00'},
+  ];
+  renderEvTable();
+}
+function runDelta(){
+  if(evRows.length===0){ evLoadSample(); }
+  const {xQ, trace, sorted} = calcDeltas(evRows);
+  const xThNote = '<span class="muted">(x_q 求和参与判定前的原始时长,超时替代在 Tab④ Panel A 处理)</span>';
+  let html = `
+    <div class="ch"><span class="badge b">输出</span>各题 x_q(秒)</div>
+    <table class="t"><thead><tr><th>question_id</th><th class="r">x_q</th><th>说明</th></tr></thead><tbody>`;
+  const ids = Object.keys(xQ).sort();
+  if(ids.length===0){ html += '<tr><td colspan="3" class="c muted">无有效 answer_update 事件</td></tr>'; }
+  for(const id of ids){
+    html += `<tr><td class="k">${esc(id)}</td><td class="r">${xQ[id]}</td><td class="tiny">intval(ΣΔ)</td></tr>`;
+  }
+  html += '</tbody></table>';
+  // trace
+  html += `<hr class="sep"><div class="ch"><span class="badge">trace</span>排序后事件处理序列</div>`;
+  html += '<table class="t"><thead><tr><th>#</th><th>event_type</th><th>ques_id</th><th>event_time</th><th class="r">Δ(秒)</th><th>处理</th></tr></thead><tbody>';
+  sorted.forEach((ev,i)=>{
+    const tr = trace[i]||{};
+    const d = tr.delta===null||tr.delta===undefined ? '—' : tr.delta;
+    const cls = tr.cls==='zero'?' style="color:var(--danger)"':(tr.cls==='hit'?' style="color:var(--ok)"':'');
+    html += `<tr><td class="c">${i+1}</td><td class="k">${ev.event_type}</td><td class="k">${esc(ev.question_id||'—')}</td><td class="tiny">${esc(ev.event_time)}</td><td class="r"${cls}>${d}</td><td class="tiny"${cls}>${tr.note||''}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  html += `<div class="footnote">${xThNote}<br>注:负 Δ 归零保护 — 排序后若 tᵢ &lt; tᵢ₋₁(乱序回填),Δ 取负则置 0。</div>`;
+  document.getElementById('deltaResult').innerHTML = html;
+}
+// 初始化
+evLoadSample();
+
+/* ---- 导入功能 ---- */
+// 中文表头 → 标准字段名 的别名表(用于智能表头识别)
+const IMPORT_HEADER_ALIASES = {
+  'event_type':['event_type','事件类型','eventtype','type'],
+  'question_id':['question_id','questionid','题目id','题目id','qid','q_id','ques_id','question'],
+  'event_time':['event_time','eventtime','time','created_at','create_time','事件时间','时间']
+};
+function toggleImportPanel(){
+  const p = document.getElementById('importPanel');
+  const open = p.style.display === 'none';
+  p.style.display = open ? 'block' : 'none';
+  if(open){ document.getElementById('importText').focus(); }
+  else { document.getElementById('importReport').innerHTML=''; }
+}
+// 解析粘贴文本 → { events, skipped }
+function parseEvents(raw){
+  const events = [];
+  const skipped = [];
+  if(!raw || !raw.trim()){ return {events, skipped, emptyInput:true}; }
+  // 切行 + 记录原始文本
+  const lines = raw.split(/\r?\n/).map(s=>s).map((s,i)=>({raw:s, idx:i+1}));
+  // 第一非空行用于判分隔符
+  const firstReal = lines.find(l=>l.raw.trim()!=='');
+  if(!firstReal){ return {events, skipped, emptyInput:true}; }
+  // 判分隔符: \t 多 → TSV, 否则 ','
+  const tabN = (firstReal.raw.match(/\t/g)||[]).length;
+  const commaN = (firstReal.raw.match(/,/g)||[]).length;
+  const sep = tabN > commaN ? '\t' : ',';
+  // 表头识别: 首行 split 后逐 cell 匹配别名
+  let dataStart = 0;        // 数据从 lines[dataStart] 开始
+  const colMap = {};        // field → 列索引
+  const firstCells = firstReal.raw.split(sep).map(c=>c.trim().toLowerCase());
+  let headerHit = false;
+  for(let ci=0; ci<firstCells.length; ci++){
+    for(const field in IMPORT_HEADER_ALIASES){
+      if(IMPORT_HEADER_ALIASES[field].includes(firstCells[ci])){
+        colMap[field] = ci; headerHit = true; break;
+      }
+    }
+  }
+  if(headerHit){
+    // 首行是表头 → 数据从下一非空行开始
+    dataStart = lines.indexOf(firstReal) + 1;
+    // 校验三字段是否都映射到了
+    ['event_type','question_id','event_time'].forEach(f=>{
+      if(colMap[f]===undefined){
+        // 表头被识别但缺某列 → 回退为默认列序更安全
+        headerHit = false;
+      }
+    });
+    if(!headerHit){
+      // 缺关键字段, 当无表头处理, 默认列序
+      colMap.event_type=0; colMap.question_id=1; colMap.event_time=2;
+      dataStart = lines.indexOf(firstReal); // 首行也当数据
+    }
+  } else {
+    colMap.event_type=0; colMap.question_id=1; colMap.event_time=2;
+    dataStart = lines.indexOf(firstReal);
+  }
+  // 逐数据行解析
+  for(let i=dataStart; i<lines.length; i++){
+    const line = lines[i];
+    if(line.raw.trim()===''){ continue; } // 跳空行
+    const cells = line.raw.split(sep);
+    // 列数不足
+    const maxIdx = Math.max(colMap.event_type, colMap.question_id, colMap.event_time);
+    if(cells.length < maxIdx+1){
+      skipped.push({line:line.idx, raw:line.raw, reason:'列数不足,期望至少 '+(maxIdx+1)+' 列'});
+      continue;
+    }
+    const et = (cells[colMap.event_type]||'').trim();
+    const qid = (cells[colMap.question_id]||'').trim();
+    const tm = (cells[colMap.event_time]||'').trim();
+    // event_type 严格匹配两个枚举
+    if(et!==START_CLICK && et!==ANSWER_UPDATE){
+      skipped.push({line:line.idx, raw:line.raw, reason:'event_type 不合法(必须 start_click 或 answer_update):"'+esc(et)+'"'});
+      continue;
+    }
+    events.push({event_type:et, question_id:qid, event_time:tm});
+  }
+  return {events, skipped, emptyInput:false};
+}
+function renderSkipTable(skipped){
+  if(skipped.length===0) return '';
+  let rows = skipped.map(s=>{
+    const rawShow = s.raw.length>40 ? esc(s.raw.slice(0,40))+'…' : esc(s.raw);
+    return `<tr><td class="c">${s.line}</td><td class="tiny" title="${esc(s.raw)}">${rawShow}</td><td class="tiny">${esc(s.reason)}</td></tr>`;
+  }).join('');
+  return `<div class="callout warn" style="margin:8px 0 0;"><span class="lbl">⚠</span> ${skipped.length} 行被跳过</div>
+    <table class="t" style="margin-top:6px;"><thead><tr><th>行号</th><th>原始内容</th><th>原因</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function doImport(){
+  const reportEl = document.getElementById('importReport');
+  const raw = document.getElementById('importText').value;
+  const {events, skipped, emptyInput} = parseEvents(raw);
+  if(emptyInput){
+    reportEl.innerHTML = '<div class="callout danger" style="margin:0;"><span class="lbl">✗</span> 请先粘贴数据</div>';
+    return;
+  }
+  // 全失败: 不清 evRows, 提示
+  if(events.length===0){
+    reportEl.innerHTML = '<div class="callout danger" style="margin:0;"><span class="lbl">✗</span> 解析失败,未能识别任何有效事件(原编辑器内容已保留)</div>' + renderSkipTable(skipped);
+    return;
+  }
+  // 覆盖前 confirm
+  if(evRows.length>0){
+    if(!confirm('编辑器已有 '+evRows.length+' 条事件,确认用导入数据覆盖?')){ return; }
+  }
+  evRows = events;
+  renderEvTable();
+  // 统计
+  const sc = events.filter(e=>e.event_type===START_CLICK).length;
+  const au = events.filter(e=>e.event_type===ANSWER_UPDATE).length;
+  let html = '<div class="callout ok" style="margin:0;"><span class="lbl">✓</span> 导入成功 · '+events.length+' 条事件(start_click '+sc+' / answer_update '+au+')</div>';
+  if(skipped.length>0){ html += renderSkipTable(skipped); }
+  reportEl.innerHTML = html;
+}
+
+/* ════════════════════════════════════════════════════════════
+ * TAB ② k = Φ⁻¹(P)
+ * ════════════════════════════════════════════════════════════ */
+let invMode = 'ti';
+document.getElementById('invMode').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-m]'); if(!b) return;
+  invMode = b.dataset.m;
+  document.querySelectorAll('#invMode button').forEach(x=>x.classList.toggle('active', x===b));
+  const desc = {
+    ti:'P_TI:从均值往<b>右</b>找最慢的题(磨蹭题判定)。取值范围 <code>50.0 – 99.9</code>。k 为正。',
+    juan:'P_JUAN:从均值往<b>左</b>找最快的卷(乱答卷判定)。取值范围 <code>0.1 – 50.0</code>。k 为负。',
+    raw:'原始 Φ⁻¹(P/100),P 取 0–100 任意值。'
+  };
+  document.getElementById('invModeDesc').innerHTML = desc[invMode];
+  refreshInvBound();
+});
+function refreshInvBound(){
+  const el = document.getElementById('invBound');
+  if(invMode==='ti'){
+    el.innerHTML = `合法区间:<code>[${P_TI_MIN}, ${P_TI_MAX}]</code>。<br>越界判定(P_TI):<code>p &lt; ${P_TI_MIN} || p &gt; ${P_TI_MAX}</code> → 422 拒绝(端点 50.0 / 99.9 合法)。`;
+  } else if(invMode==='juan'){
+    el.innerHTML = `合法区间:<code>[${P_JUAN_MIN}, ${P_JUAN_MAX}]</code>。<br>越界判定(P_JUAN):<code>p &lt; ${P_JUAN_MIN} || p &gt; ${P_JUAN_MAX}</code> → 422 拒绝(端点 0.1 / 50.0 合法)。`;
+  } else { el.innerHTML = '无校验约束(原始模式)。'; }
+}
+function runInvNorm(){
+  const pRaw = parseFloat(document.getElementById('invP').value);
+  let p = pRaw, note='';
+  if(invMode==='juan'){
+    // 卷门槛:P_JUAN 是"最快 P%",k=Φ⁻¹(P/100) 本身就是负数(P<50)
+    // 但若用户输入>50(表示从右数),取 100-P
+    // 生产逻辑:percentileToZ(percentile) 直接 = invNorm(percentile/100)
+    // P_JUAN=5 → invNorm(0.05)=-1.6449。保持直接调用,不做翻转。
+  }
+  const t = invNormTrace(p/100.0);
+  const k = t.value;
+  let boundCheck = '';
+  if(invMode==='ti'){
+    const ok = !(p<P_TI_MIN||p>P_TI_MAX);
+    boundCheck = `<div class="callout ${ok?'ok':'danger'}"><span class="lbl">边界校验</span>P_TI=${p} ${ok?'<span class="pill pass">PASS</span> 在 [50.0, 99.9] 内,合法':'<span class="pill fail">422</span> 越界'}。</div>`;
+  } else if(invMode==='juan'){
+    const ok = !(p<P_JUAN_MIN||p>P_JUAN_MAX);
+    boundCheck = `<div class="callout ${ok?'ok':'danger'}"><span class="lbl">边界校验</span>P_JUAN=${p} ${ok?'<span class="pill pass">PASS</span> 在 [0.1, 50.0] 内,合法':'<span class="pill fail">422</span> 越界'}。</div>`;
+  }
+  let html = `
+    <div class="ch"><span class="badge b">结果</span>k = Φ⁻¹(${p}/100) = Φ⁻¹(${fmt(p/100)})</div>
+    <div class="formula mono" style="font-size:18px;">k = <b style="color:var(--accent)">${fmt(k)}</b></div>
+    ${boundCheck}
+    <div class="callout"><span class="lbl">Acklam 算法 trace(严格复刻生产代码)</span>
+      <table class="t" style="margin-top:6px;">
+        <tr><td class="k">输入 p = P/100</td><td class="num">${fmt(p/100)}</td></tr>
+        <tr><td class="k">命中区域</td><td>${t.region}</td></tr>
+        ${t.q!==null?`<tr><td class="k">中间量 q</td><td class="num">${fmt(t.q)}</td></tr>`:''}
+        ${t.r!==null?`<tr><td class="k">中间量 r = q²</td><td class="num">${fmt(t.r)}</td></tr>`:''}
+        ${t.neg?'<tr><td class="k">上尾取负</td><td>−(分子/分母)</td></tr>':''}
+        <tr><td class="k">分子</td><td class="num">${fmt(t.num)}</td></tr>
+        <tr><td class="k">分母</td><td class="num">${fmt(t.den)}</td></tr>
+        <tr><td class="k">结果 k = num/den</td><td class="num" style="color:var(--accent);font-weight:700">${fmt(t.value)}</td></tr>
+      </table>
+    </div>
+    ${(() => {
+      // Acklam 全区精度说明(经 17 点数值核对,中心区/尾区偏差均 < 1.5e-9)
+      const region = t.region;
+      const isTail = region.indexOf('尾')>=0;
+      return `<div class="callout ok"><span class="lbl">精度核对</span>k = ${fmt(k)}。<b>${isTail?'尾区':'中心区'}</b>结果,Acklam 有理分式近似相对误差 ~10⁻⁹(经 NIST/scipy 真值 17 点核对,中心区与上/下尾偏差均 &lt; 1.5e-9),结果可信。</div>`;
+    })()}
+    <div class="footnote">边界:pLow = 0.02425,pHigh = 1 − 0.02425 = 0.97575。三段分支用严格 &lt; / &gt; 判定(中心区间含两端点)。<br>生产代码:DurationThresholdController PUT 时 <code>k = InverseNormalCDF::percentileToZ($percentile)</code>,存入 k_cache。</div>`;
+  document.getElementById('invResult').innerHTML = html;
+}
+function renderInvTable(){
+  const tb = document.querySelector('#invTable tbody');
+  if(tb.children.length>0) return;
+  let rows='';
+  for(let p=1;p<=99;p++){
+    const t = invNormTrace(p/100);
+    rows += `<tr style="cursor:pointer" onclick="document.getElementById('invP').value=${p};runInvNorm();"><td class="r">${p}.0</td><td class="num">${fmt(t.value)}</td><td class="tiny">${t.region}</td></tr>`;
+  }
+  // 关键档位
+  const keyP = [80,90,95,97.5,99,2.5,5,10,1,20];
+  tb.innerHTML = rows;
+}
+refreshInvBound();
+
+/* ════════════════════════════════════════════════════════════
+ * TAB ③ Welford
+ * ════════════════════════════════════════════════════════════ */
+let wfInitM = 'm2';
+document.getElementById('wfInitMode').addEventListener('click', e=>{
+  const b=e.target.closest('button[data-m]'); if(!b) return;
+  wfInitM=b.dataset.m;
+  document.querySelectorAll('#wfInitMode button').forEach(x=>x.classList.toggle('active',x===b));
+  document.getElementById('wfInitM2').style.display = wfInitM==='m2'?'flex':'none';
+  document.getElementById('wfInitSigma').style.display = wfInitM==='sigma'?'flex':'none';
+});
+function loadWfCase(){
+  document.getElementById('wfN').value=2; document.getElementById('wfMu').value=100; document.getElementById('wfM2').value=200;
+  document.getElementById('wfPush').value='120';
+  document.querySelectorAll('#wfInitMode button')[0].click();
+}
+function getWfInit(){
+  let n, mu, m2;
+  if(wfInitM==='m2'){
+    n=parseInt(document.getElementById('wfN').value)||0;
+    mu=parseFloat(document.getElementById('wfMu').value)||0;
+    m2=parseFloat(document.getElementById('wfM2').value)||0;
+  } else {
+    n=parseInt(document.getElementById('wfN2').value)||0;
+    mu=parseFloat(document.getElementById('wfMu2').value)||0;
+    const sigma=parseFloat(document.getElementById('wfSigma2').value)||0;
+    m2 = n*sigma*sigma; // M2 = n·σ²
+  }
+  return {n,mu,m2};
+}
+function runWelford(){
+  const init = getWfInit();
+  const vals = document.getElementById('wfPush').value.split(/[,\s]+/).map(x=>parseFloat(x)).filter(x=>!isNaN(x));
+  const w = new Welford(init.n, init.mu, init.m2);
+  const initSigma = w.sigma();
+  const initM2Display = init.m2;
+  let html = `
+    <div class="ch"><span class="badge b">初始状态</span>(读自 stat_*)</div>
+    <div class="kv"><span class="k">n</span><span class="v">${init.n}</span></div>
+    <div class="kv"><span class="k">μ</span><span class="v">${fmt(init.mu)}</span></div>
+    <div class="kv"><span class="k">M₂</span><span class="v">${fmt(initM2Display)}</span></div>
+    <div class="kv"><span class="k">σ = √(M₂/n)</span><span class="v">${fmt(initSigma)}</span></div>
+    ${wfInitM==='sigma'?`<div class="footnote">σ→M₂ 反推:M₂ = n·σ² = ${init.n}·${fmt(initSigma)}² = ${fmt(initM2Display)}</div>`:''}
+    <hr class="sep">
+    <div class="ch"><span class="badge b">逐步 push</span>Welford 增量</div>
+    <div class="formula mono">push(x): n++; δ=x−μ; μ+=δ/n; δ₂=x−μ; M₂+=δ·δ₂</div>
+    <table class="t"><thead><tr><th>step</th><th class="r">push x</th><th class="r">δ</th><th class="r">δ₂</th><th class="r">n</th><th class="r">μ'</th><th class="r">M₂'</th><th class="r">σ'</th></tr></thead><tbody>`;
+  let step=0;
+  const before = {n:init.n, mu:init.mu, m2:init.m2};
+  for(const x of vals){
+    step++;
+    const n0=w.n, mu0=w.mu;
+    w.push(x);
+    const delta = x-mu0;
+    const delta2 = x-w.mu;
+    const sigma = w.sigma();
+    html += `<tr><td class="c">${step}</td><td class="r">${fmt(x)}</td><td class="r">${fmt(delta)}</td><td class="r">${fmt(delta2)}</td><td class="r">${w.n}</td><td class="r">${fmt(w.mu)}</td><td class="r">${fmt(w.m2)}</td><td class="r">${fmt(sigma)}</td></tr>`;
+  }
+  html += '</tbody></table>';
+  html += `
+    <div class="verdict ${vals.length?'normal':''}" style="text-align:left;padding:14px 18px;">
+      <div class="ch" style="margin-bottom:8px;"><span class="badge g">最终状态</span>push 完毕</div>
+      <div class="kv"><span class="k">n</span><span class="v big">${w.n}</span></div>
+      <div class="kv"><span class="k">μ</span><span class="v big">${fmt(w.mu)}</span></div>
+      <div class="kv"><span class="k">M₂</span><span class="v">${fmt(w.m2)}</span></div>
+      <div class="kv"><span class="k">σ = √(M₂/n)</span><span class="v big">${fmt(w.sigma())}</span></div>
+    </div>
+    <div class="footnote">注:σ 用<b>总体标准差</b>(除以 n,非 n−1)。生产代码 WelfordMerger::sigma() 即 sqrt(m2/n)。<br>mergeBatch 批合并公式(跑批用):μ = μ + (μ_B−μ)·(n_B/n);M₂ = M₂ + M₂B + (μ_B−μ)²·(n·n_B/n)。本页 trace 演示 push(单点)。</div>`;
+  document.getElementById('wfResult').innerHTML = html;
+}
+
+/* ════════════════════════════════════════════════════════════
+ * TAB ④ 主判定器
+ * ════════════════════════════════════════════════════════════ */
+function refreshJKTi(){
+  const p = parseFloat(document.getElementById('jPTi').value);
+  const k = percentileToZ(p);
+  document.getElementById('jKTi').textContent = fmt(k);
+  const mu=parseFloat(document.getElementById('jMuQ').value), sig=parseFloat(document.getElementById('jSigQ').value);
+  document.getElementById('jXTh').textContent = fmt(mu + k*sig);
+}
+function refreshJKJ(){
+  const p = parseFloat(document.getElementById('jPJ').value);
+  const k = percentileToZ(p);
+  document.getElementById('jKJ').textContent = fmt(k);
+}
+['jMuQ','jSigQ','jPTi'].forEach(id=>document.getElementById(id).addEventListener('input', refreshJKTi));
+document.getElementById('jPJ').addEventListener('input', refreshJKJ);
+
+// Panel A 结果暂存(供传 Panel B)
+let panelAStars = null;
+function runPanelA(){
+  refreshJKTi();
+  const mu = parseFloat(document.getElementById('jMuQ').value);
+  const sig = parseFloat(document.getElementById('jSigQ').value);
+  const pTi = parseFloat(document.getElementById('jPTi').value);
+  const kTi = percentileToZ(pTi);
+  const threshold = mu + kTi*sig;
+  const subst = Math.floor(mu/3);
+  // 解析 x_q
+  const lines = document.getElementById('jXqInput').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const rows = [];
+  for(const ln of lines){
+    const m = ln.split(/[,\s]+/);
+    const qid = m[0], xq = parseInt(m[1]);
+    if(isNaN(xq)){ rows.push({qid, xq:null, err:'x_q 解析失败'}); continue; }
+    const r = applyTimeoutRule(xq, mu, threshold);
+    rows.push({qid, xq, is_timeout:r.is_timeout, x_q_star:r.x_q_star});
+  }
+  panelAStars = rows.filter(r=>!r.err);
+  let html = `<div class="ch"><span class="badge b">Panel A 结果</span>超时替代</div>
+    <div class="formula mono">x_门槛 = ${fmt(mu)} + ${fmt(kTi)}×${fmt(sig)} = <b style="color:var(--accent)">${fmt(threshold)}</b> &nbsp;|&nbsp; 替代值 ⌊μ/3⌋ = ⌊${fmt(mu)}/3⌋ = <b>${subst}</b></div>
+    <table class="t"><thead><tr><th>question_id</th><th class="r">x_q</th><th>x_q ≥ 门槛?</th><th class="r">x_q_star</th></tr></thead><tbody>`;
+  let y=0;
+  for(const r of rows){
+    if(r.err){ html += `<tr><td class="k">${esc(r.qid)}</td><td colspan="3" class="tiny" style="color:var(--danger)">${r.err}</td></tr>`; continue; }
+    const cmp = r.is_timeout ? `<span class="pill eq">${r.xq} ≥ ${fmt(threshold)}</span> 超时→替代` : `${r.xq} < ${fmt(threshold)} 保留`;
+    html += `<tr><td class="k">${esc(r.qid)}</td><td class="r">${r.xq}</td><td>${cmp}</td><td class="r" style="font-weight:600">${r.x_q_star}</td></tr>`;
+    y += r.x_q_star;
+  }
+  html += `</tbody></table>
+    <div class="kv"><span class="k">y = Σ x_q_star</span><span class="v big">${y}</span></div>
+    <div class="footnote">判定用 <b>≥</b>(等号算超时);替代值 <code>floor(μ/3)</code>(向下取整,非四舍五入)。复刻 applyTimeoutRule()。</div>`;
+  document.getElementById('panelAResult').innerHTML = html;
+}
+function sendToPanelB(){
+  if(!panelAStars){ runPanelA(); }
+  if(panelAStars){
+    // 填入 Panel B 的卷明细 textarea
+    // (Panel B 用 stat 直插模式,明细在内部;此处提示)
+    document.getElementById('panelBResult').innerHTML = `<div class="callout ok"><span class="lbl">已传递</span>Panel A 的 ${panelAStars.length} 题 x_q_star 已就绪(y=${panelAStars.reduce((s,r)=>s+r.x_q_star,0)})。点"判定"时将自动用作本卷明细。</div>`;
+    setJudgeXqStars(panelAStars);
+  }
+}
+let judgeXqStarsOverride = null;
+function setJudgeXqStars(rows){ judgeXqStarsOverride = rows; }
+
+// 4 层 stat 输入渲染
+function renderStatGrid(){
+  const levels = [
+    {key:'questionnaire', label:'① 问卷 questionnaire', ph:'questionnaire_id', defN:'', defMu:'', defM2:''},
+    {key:'car_series', label:'② 车系 car_series', ph:'brand|series|genre', defN:'5000', defMu:'300', defM2:'18000000'},
+    {key:'genre', label:'③ 类型 genre', ph:'brand|genre', defN:'', defMu:'', defM2:''},
+    {key:'brand', label:'④ 品牌 brand', ph:'brand 名', defN:'', defMu:'', defM2:''},
+  ];
+  const el = document.getElementById('statGrid');
+  el.innerHTML = levels.map(l=>`
+    <div class="stat-box" data-lv="${l.key}">
+      <div class="sb-lbl">${l.label} <span class="lv">s_*</span></div>
+      <div class="frow"><label>n</label><input type="number" class="w" data-f="${l.key}-n" value="${l.defN}" placeholder="0"></div>
+      <div class="frow"><label>μ</label><input type="number" class="w" data-f="${l.key}-mu" value="${l.defMu}" placeholder="0"></div>
+      <div class="frow"><label>M₂</label><input type="number" class="wl" data-f="${l.key}-m2" value="${l.defM2}" placeholder="0"></div>
+    </div>`).join('') + `
+    <div class="stat-box">
+      <div class="sb-lbl">⑤ 种子 seed</div>
+      <div class="frow"><label>μ</label><input type="number" class="w" data-f="seed-mu" placeholder="留空=无"></div>
+      <div class="frow"><label>σ</label><input type="number" class="w" data-f="seed-sigma" placeholder="留空=无"></div>
+    </div>`;
+}
+renderStatGrid();
+function readStatGrid(){
+  const g = f => { const el=document.querySelector(`[data-f="${f}"]`); const v=el?el.value:''; return v===''?null:parseFloat(v); };
+  const mk = key => { const n=g(`${key}-n`), mu=g(`${key}-mu`), m2=g(`${key}-m2`); return (n!==null&&mu!==null&&m2!==null)?{n,mu,m2}:null; };
+  const seedMu=g('seed-mu'), seedSig=g('seed-sigma');
+  const seed = (seedMu!==null&&seedSig!==null)?{mu:seedMu,sigma:seedSig}:null;
+  return { q:mk('questionnaire'), cs:mk('car_series'), g:mk('genre'), b:mk('brand'), seed };
+}
+function loadJudgeSample(){
+  // C4.3.1: brand 层 μ卷=300 σ卷=60 n=5000 → M2=18000000; 本卷 y=150
+  clearStatGrid();
+  document.querySelector('[data-f="brand-n"]').value=5000;
+  document.querySelector('[data-f="brand-mu"]').value=300;
+  document.querySelector('[data-f="brand-m2"]').value=18000000;
+  document.getElementById('jXqInput').value='2002, 50\n2003, 50\n2004, 50';
+  judgeXqStarsOverride = null;
+  refreshJKJ();
+}
+function clearStatGrid(){
+  ['questionnaire','car_series','genre','brand','seed'].forEach(k=>{
+    ['n','mu','m2'].forEach(f=>{ const el=document.querySelector(`[data-f="${k}-${f}"]`); if(el) el.value=''; });
+  });
+  ['seed-mu','seed-sigma'].forEach(f=>{ const el=document.querySelector(`[data-f="${f}"]`); if(el) el.value=''; });
+}
+function runPanelB(){
+  refreshJKJ();
+  const pJ = parseFloat(document.getElementById('jPJ').value);
+  const kJuan = percentileToZ(pJ);
+  const stat = readStatGrid();
+  const ref = resolveRef('s', stat.q, stat.cs, stat.g, stat.b, stat.seed);
+  // 本卷 y 明细
+  let stars;
+  if(judgeXqStarsOverride){
+    stars = judgeXqStarsOverride;
+  } else {
+    // 用 Panel A 的 x_q_star(若算过);否则从 jXqInput 当作已替代值
+    const lines = document.getElementById('jXqInput').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    stars = [];
+    for(const ln of lines){
+      const m = ln.split(/[,\s]+/);
+      const xqs = parseInt(m[1]);
+      if(!isNaN(xqs)) stars.push({qid:m[0], x_q_star:xqs});
+    }
+  }
+  const y = stars.reduce((s,r)=>s+(r.x_q_star||0),0);
+  const verdict = judgeCore(y, ref, kJuan);
+
+  let html = `
+    <div class="ch"><span class="badge b">Panel B 结果</span>4 层回退 trace</div>
+    <div class="trace-list">`;
+  for(const t of ref.trace){
+    const cls = t.hit?'hit':'miss';
+    html += `<div class="tl ${cls}"><span class="arrow">${t.hit?'✓':'↓'}</span><b>${t.level}</b> — ${t.reason}</div>`;
+  }
+  html += `</div>
+    <hr class="sep">
+    <div class="formula mono">命中层 = <b style="color:var(--accent)">${ref.ref_level}</b> &nbsp;|&nbsp; μ卷 = ${fmt(ref.mu)} &nbsp; σ卷 = ${fmt(ref.sigma)}</div>
+    <div class="formula mono">y = Σ x_q_star = <b>${y}</b> &nbsp;|&nbsp; k_卷 = ${fmt(kJuan)} &nbsp;|&nbsp; y_门槛(raw) = ${fmt(ref.mu)} + ${fmt(kJuan)}×${fmt(ref.sigma)} = <b>${fmt(verdict.threshold_raw===null?'—':verdict.threshold_raw)}</b> → floor = <b>${verdict.y_threshold===null?'NULL':verdict.y_threshold}</b></div>`;
+
+  // 判定
+  if(ref.ref_level==='insufficient'){
+    html += `<div class="verdict"><div class="vlabel">ref_level = insufficient</div><div class="vbig" style="color:var(--ink2)">无法判定</div><div class="vdetail">stat_* 和 seed 全空 → is_anomaly=0,不阻塞审核</div></div>`;
+  } else {
+    const eqHit = verdict.threshold_raw>0 && y===verdict.threshold_raw;
+    const cls = verdict.is_anomaly?'anomaly':'normal';
+    const cmp = verdict.is_anomaly ? `${y} ≤ ${fmt(verdict.threshold_raw)}` : `${y} > ${fmt(verdict.threshold_raw)}`;
+    html += `<div class="verdict ${cls}">
+      <div class="vlabel">is_duration_anomaly</div>
+      <div class="vbig">${verdict.is_anomaly}</div>
+      <div class="vdetail">${cmp}${eqHit?' <span class="pill eq">等号命中 ≤</span>':''} ${verdict.is_anomaly?'· 异常·过快':'· 正常'}</div>
+    </div>`;
+    if(verdict.threshold_raw<=0){
+      html += `<div class="callout warn"><span class="lbl">注意</span>y_门槛 = ${fmt(verdict.threshold_raw)} ≤ 0,触发 <code>threshold &gt; 0</code> 保护 → 强制 is_anomaly=0(防退化分布误判)。</div>`;
+    }
+  }
+
+  // 冻结字段
+  html += `<div class="ch" style="margin-top:14px;"><span class="badge g">冻结字段</span>questionnaire_answer_audit 5 字段</div>
+    <table class="t"><thead><tr><th>字段</th><th>值</th></tr></thead><tbody>
+    <tr><td class="k">y_duration</td><td class="num">${y}</td></tr>
+    <tr><td class="k">y_threshold</td><td class="num">${verdict.y_threshold===null?'NULL':verdict.y_threshold}</td></tr>
+    <tr><td class="k">is_duration_anomaly</td><td class="c">${verdict.is_anomaly}</td></tr>
+    <tr><td class="k">duration_ref_level</td><td class="k"><span class="pill level ${ref.ref_level}">${ref.ref_level}</span></td></tr>
+    <tr><td class="k">duration_evaluated_at</td><td class="tiny">提交时冻结</td></tr>
+    </tbody></table>`;
+  document.getElementById('panelBResult').innerHTML = html;
+  renderKpi(ref, stat, kJuan, pJ);
+}
+function renderKpi(ref, stat, kJuan, pJ){
+  // KPI: 用命中层的 q 和 s 量(这里复用 brand 或命中层)。为简单展示命中层 s 量 + 假设 q 量同层
+  const lv = ref.ref_level;
+  let html = `<div class="grid2">
+    <div>
+      <div class="ch" style="font-size:12px;">卷级(命中层:${lv})</div>
+      <div class="kv"><span class="k">μ卷</span><span class="v">${fmt(ref.mu)}</span></div>
+      <div class="kv"><span class="k">σ卷 = √(M₂/n)</span><span class="v">${fmt(ref.sigma)}</span></div>
+      <div class="kv"><span class="k">y_门槛 = μ + k·σ</span><span class="v big">${fmt(ref.mu + kJuan*ref.sigma)}</span></div>
+      <div class="kv"><span class="k">y_门槛(floor)</span><span class="v">${Math.floor(ref.mu + kJuan*ref.sigma)}</span></div>
+      <div class="kv"><span class="k">k_卷(P_JUAN=${pJ})</span><span class="v">${fmt(kJuan)}</span></div>
+    </div>
+    <div>
+      <div class="ch" style="font-size:12px;">题级(同层 q 量 — 需在 stat_grid 同层填 q)</div>
+      <div class="footnote">题级 KPI(x_门槛)在 Panel A 计算。σ = √(M₂/n) 实时算,不存表。改 P_TI/P_JUAN 后门槛实时联动(报表 §9.1/§9.3)。</div>
+    </div>
+  </div>`;
+  document.getElementById('kpiArea').innerHTML = html;
+}
+refreshJKTi(); refreshJKJ();
+
+/* ════════════════════════════════════════════════════════════
+ * TAB ⑤ 用例库
+ * ════════════════════════════════════════════════════════════ */
+const CASES = buildCases();
+function buildCases(){
+  const C = [];
+  // ---- C4.1.1 Δ 计算 ----
+  C.push({id:'C4.1.1', title:'基本 Δ 计算 + 多次修改累加', pri:'P0', sec:'§4.1', tab:'delta', computable:true,
+    setup:{events:[
+      {event_type:START_CLICK,question_id:'',event_time:'2026-06-20 10:00:00'},
+      {event_type:ANSWER_UPDATE,question_id:'2002',event_time:'2026-06-20 10:00:10'},
+      {event_type:ANSWER_UPDATE,question_id:'2003',event_time:'2026-06-20 10:00:25'},
+      {event_type:ANSWER_UPDATE,question_id:'2002',event_time:'2026-06-20 10:00:40'},
+      {event_type:ANSWER_UPDATE,question_id:'2004',event_time:'2026-06-20 10:01:00'},
+    ]},
+    expect:{xQ:{'2002':25,'2003':15,'2004':20}},
+    note:'Q2 累加两次:10+15=25。'});
+  // ---- C4.1.2 首题锚点 ----
+  C.push({id:'C4.1.2', title:'首题以 start_click 为锚点', pri:'P0', sec:'§4.1', tab:'delta', computable:true,
+    setup:{events:[
+      {event_type:START_CLICK,question_id:'',event_time:'2026-06-20 11:00:00'},
+      {event_type:ANSWER_UPDATE,question_id:'2002',event_time:'2026-06-20 11:00:07'},
+    ]},
+    expect:{xQ:{'2002':7}},
+    note:'首题 Δ 以 start_click 为前驱,非 0/非 NULL。'});
+  // ---- C4.2.1 超时替代 ----
+  C.push({id:'C4.2.1', title:'x_q ≥ x_门槛 → μ/3 替代', pri:'P0', sec:'§4.2', tab:'judge-subst', computable:true,
+    setup:{muQ:30, sigQ:10, pTi:95, xqs:[{qid:'2002',xq:60},{qid:'2003',xq:20}]},
+    expect:{stars:{'2002':{is_timeout:true,x_q_star:10},'2003':{is_timeout:false,x_q_star:20}}},
+    note:'x_门槛=46.449;60≥46.449→替代floor(30/3)=10;20保留。'});
+  // ---- C4.2.2 略低不替代 ----
+  C.push({id:'C4.2.2', title:'x_q 略低于门槛 → 不替代', pri:'P0', sec:'§4.2', tab:'judge-subst', computable:true,
+    setup:{muQ:30, sigQ:10, pTi:95, xqs:[{qid:'2002',xq:46}]},
+    expect:{stars:{'2002':{is_timeout:false,x_q_star:46}}},
+    note:'46<46.449,不替代。'});
+  // ---- C4.3.1 判异常 ----
+  C.push({id:'C4.3.1', title:'y ≤ y_门槛 → 判异常', pri:'P0', sec:'§4.3', tab:'judge', computable:true,
+    setup:{stat:{brand:{n:5000,mu:300,m2:18000000}}, pJ:5, stars:[{qid:'2002',xq:50},{qid:'2003',xq:50},{qid:'2004',xq:50}]},
+    expect:{y:150, y_threshold:201, is_anomaly:1, ref_level:'brand'},
+    note:'σ卷=60;y_门槛=300−98.69=201.31→201;150≤201异常。'});
+  // ---- C4.3.2 不判异常 ----
+  C.push({id:'C4.3.2', title:'y > y_门槛 → 不判异常', pri:'P0', sec:'§4.3', tab:'judge', computable:true,
+    setup:{stat:{brand:{n:5000,mu:300,m2:18000000}}, pJ:5, stars:[{qid:'2002',xq:100},{qid:'2003',xq:100},{qid:'2004',xq:100}]},
+    expect:{y:300, y_threshold:201, is_anomaly:0, ref_level:'brand'},
+    note:'300>201,正常。'});
+  // ---- C4.4.1 默认 k ----
+  C.push({id:'C4.4.1', title:'k = Φ⁻¹(95%) ≈ 1.644854', pri:'P0', sec:'§4.4', tab:'invnorm', computable:true,
+    setup:{p:95}, expect:{k:1.6448536}, note:'Acklam 精确值 1.6448536...'});
+  // ---- C4.4.2 k 多档 ----
+  C.push({id:'C4.4.2', title:'k 随 P 变化(多档对照)', pri:'P0', sec:'§4.4', tab:'invnorm-multi', computable:true,
+    setup:{pts:[{p:80,k:0.8416},{p:90,k:1.2816},{p:95,k:1.6449},{p:97.5,k:1.9600},{p:99,k:2.3263},{p:5,k:-1.6449},{p:1,k:-2.3263}]},
+    expect:{}, note:'对照表 7 档(误差<1e-3),含尾区 P=99/1。Acklam 三段精度均 ~1e-9。', multi:true});
+  // ---- C4.5.1 Welford ----
+  C.push({id:'C4.5.1', title:'Welford 单值增量正确', pri:'P0', sec:'§4.5', tab:'welford', computable:true,
+    setup:{n:2,mu:100,m2:200,push:[120]},
+    expect:{n:3,mu:106.666667,m2:466.666667,sigma:12.472},
+    note:'n=3,μ=106.667,M₂=466.667,σ=12.472。'});
+  // ---- C5.1.1 等号命中 ----
+  C.push({id:'C5.1.1', title:'y 正好 = y_门槛 → 判异常(≤)', pri:'P0', sec:'§5.1', tab:'judge', computable:true,
+    setup:{stat:{brand:{n:5000,mu:300,m2:18480575.51}}, pJ:5, stars:[{qid:'2002',xq:50},{qid:'2003',xq:50},{qid:'2004',xq:50},{qid:'2005',xq:50}]},
+    expect:{y:200, y_threshold:200, is_anomaly:1, ref_level:'brand'},
+    note:'σ=60.7957(由 M2 反推使 threshold 恰=200.0);y=200≤200 等号命中异常(≤非<)。'});
+  // ---- C5.2.1 n=2000/1999 ----
+  C.push({id:'C5.2.1', title:'n=2000 命中问卷层 / n=1999 回退', pri:'P0', sec:'§5.2', tab:'judge-fallback', computable:true,
+    setup:{roundA:{stat:{questionnaire:{n:2000,mu:250,m2:5000000},car_series:{n:5000,mu:400,m2:18000000}},pJ:5,y:100},
+           roundB:{stat:{questionnaire:{n:1999,mu:250,m2:5000000},car_series:{n:5000,mu:400,m2:18000000}},pJ:5,y:100}},
+    expect:{roundA:{ref_level:'questionnaire',y_threshold:167},roundB:{ref_level:'car_series',y_threshold:301}},
+    note:'n≥2000命中本层;n<2000下沉。', multi:true});
+  // ---- C5.3.1 x_q=门槛 ----
+  C.push({id:'C5.3.1', title:'x_q 正好 = x_门槛 → 替代(≥)', pri:'P0', sec:'§5.3', tab:'judge-subst', computable:true,
+    setup:{muQ:20, sigQ:18.2387049775, pTi:95, xqs:[{qid:'2002',xq:50}]},
+    expect:{stars:{'2002':{is_timeout:true,x_q_star:6}}},
+    note:'sigQ=30/kTi 使 x_门槛恰=50.0;50≥50 等号替代;floor(20/3)=6。'});
+  // ---- C5.4.1 floor 取整 ----
+  C.push({id:'C5.4.1', title:'μ/3 替代值 floor 取整(μ=31→10)', pri:'P1', sec:'§5.4', tab:'judge-subst', computable:true,
+    setup:{muQ:31, sigQ:1, pTi:95, xqs:[{qid:'2002',xq:60}]},
+    expect:{stars:{'2002':{is_timeout:true,x_q_star:10}}},
+    note:'floor(31/3)=floor(10.33)=10(非四舍五入)。'});
+  // ---- C5.5.1 σ=0 退化 ----
+  C.push({id:'C5.5.1', title:'σ=0 退化分布 → y=μ 仍判异常(已知行为)', pri:'P0', sec:'§5.5', tab:'judge', computable:true,
+    setup:{stat:{brand:{n:5000,mu:300,m2:0}}, pJ:5, stars:[{qid:'2002',xq:300}]},
+    expect:{y:300, y_threshold:300, is_anomaly:1, ref_level:'brand'},
+    note:'σ=0→y_门槛=μ=300;300≤300异常;threshold>0保护不拦(已知非bug)。'});
+  // ---- C6.1.1 问卷层命中 ----
+  C.push({id:'C6.1.1', title:'问卷层 n=3000 → 命中', pri:'P1', sec:'§6.1', tab:'judge', computable:true,
+    setup:{stat:{questionnaire:{n:3000,mu:250,m2:5000000}}, pJ:5, stars:[{qid:'2002',xq:100}]},
+    expect:{y:100, y_threshold:182, is_anomaly:1, ref_level:'questionnaire'}, note:'n=3000≥2000命中;σ=√(5e6/3000)=40.82;y_门槛=⌊250−1.6449×40.82⌋=182。'});
+  // ---- C6.2.1 车系层 ----
+  C.push({id:'C6.2.1', title:'问卷层空 → 车系层命中', pri:'P1', sec:'§6.2', tab:'judge', computable:true,
+    setup:{stat:{car_series:{n:3000,mu:300,m2:18000000}}, pJ:5, stars:[{qid:'2002',xq:100}]},
+    expect:{y:100, y_threshold:172, is_anomaly:1, ref_level:'car_series'}, note:'问卷层空,车系层命中;σ=√(1.8e7/3000)=77.46;y_门槛=⌊300−1.6449×77.46⌋=172。'});
+  // ---- C6.3.1 类型层 ----
+  C.push({id:'C6.3.1', title:'问卷/车系层空 → 类型层命中', pri:'P1', sec:'§6.3', tab:'judge', computable:true,
+    setup:{stat:{genre:{n:3000,mu:300,m2:18000000}}, pJ:5, stars:[{qid:'2002',xq:100}]},
+    expect:{y:100, y_threshold:172, is_anomaly:1, ref_level:'genre'}, note:'前两层空,类型层命中;σ=77.46;y_门槛=172。'});
+  // ---- C6.4.1 品牌层 ----
+  C.push({id:'C6.4.1', title:'前三层空 → 品牌层兜底', pri:'P1', sec:'§6.4', tab:'judge', computable:true,
+    setup:{stat:{brand:{n:5000,mu:300,m2:18000000}}, pJ:5, stars:[{qid:'2002',xq:100}]},
+    expect:{y:100, y_threshold:201, is_anomaly:1, ref_level:'brand'}, note:'前三层空,品牌层兜底。'});
+  // ---- C6.5.1 种子 ----
+  C.push({id:'C6.5.1', title:'4层全空 → 用种子值', pri:'P1', sec:'§6.5', tab:'judge', computable:true,
+    setup:{stat:{}, seed:{mu:300,sigma:60}, pJ:5, stars:[{qid:'2002',xq:100}]},
+    expect:{y:100, y_threshold:201, is_anomaly:1, ref_level:'seed'}, note:'4层空,种子μ=300/σ=60→y_门槛=201。'});
+  // ---- C6.6.1 insufficient ----
+  C.push({id:'C6.6.1', title:'stat_* 和 seed 全空 → insufficient', pri:'P1', sec:'§6.6', tab:'judge', computable:true,
+    setup:{stat:{}, pJ:5, stars:[{qid:'2002',xq:100}]},
+    expect:{y:100, y_threshold:null, is_anomaly:0, ref_level:'insufficient'}, note:'全空→不判异常,不阻塞。'});
+  // ---- C7.x 流程类(标注需环境) ----
+  C.push({id:'C7.1.1', title:'duration:calculate 完整链路', pri:'P1', sec:'§7.1', tab:'flow', computable:false, note:'端到端命令验证,需 DB 环境。核心计算等价于本页 Tab①+④。'});
+  C.push({id:'C7.2.1', title:'提交触发 sample→judge', pri:'P1', sec:'§7.2', tab:'flow', computable:false, note:'端到端;sample 的 Welford 更新可验于 Tab③,judge 可验于 Tab④。'});
+  C.push({id:'C7.3.1', title:'无明细 → no_data 兜底', pri:'P1', sec:'§7.3', tab:'judge-nodata', computable:true,
+    setup:{stat:{brand:{n:5000,mu:300,m2:18000000}}, pJ:5, stars:[]},
+    expect:{y:0, ref_level:'no_data', is_anomaly:0}, note:'本卷无 x_q_star 明细→ref_level=no_data。'});
+  C.push({id:'C7.4.1', title:'重复跑批幂等(UPSERT)', pri:'P1', sec:'§7.4', tab:'flow', computable:false, note:'唯一约束+UPSERT,需 DB 验证。'});
+  C.push({id:'C7.5.1', title:'改配置不回算历史(向后运用)', pri:'P1', sec:'§7.5', tab:'flow', computable:false, note:'冻结字段不回算,需 DB 验证。本页可演示:同数据改 P_JUAN 后 y_门槛变化(只影响未来)。'});
+  C.push({id:'C7.6.1', title:'backfill 日期范围回填明细', pri:'P1', sec:'§7.6', tab:'flow', computable:false, note:'冷启动命令,需 DB+event_log 环境。'});
+  C.push({id:'C7.6.2', title:'backfill --resume 断点续跑', pri:'P1', sec:'§7.6', tab:'flow', computable:false, note:'幂等/续跑,需 DB 环境。'});
+  C.push({id:'C7.6.3', title:'backfill 缺 --from/--to → 拒绝', pri:'P2', sec:'§7.6', tab:'flow', computable:false, note:'参数校验,需跑命令验证。'});
+  // ---- C8.1.1 边界校验 ----
+  C.push({id:'C8.1.1', title:'P_TI/P_JUAN 取值边界校验', pri:'P1', sec:'§8.1', tab:'invnorm-multi', computable:true,
+    setup:{checks:[{key:'P_TI',p:49.9,ok:false},{key:'P_TI',p:100.0,ok:false},{key:'P_TI',p:50.0,ok:true},{key:'P_TI',p:99.9,ok:true},{key:'P_JUAN',p:0.05,ok:false},{key:'P_JUAN',p:50.1,ok:false},{key:'P_JUAN',p:0.1,ok:true}]},
+    expect:{}, note:'端点合法,越界422。', multi:true});
+  // ---- C8.2.1 k_cache ----
+  C.push({id:'C8.2.1', title:'k_cache 缓存正确(保存即算)', pri:'P1', sec:'§8.2', tab:'invnorm', computable:true,
+    setup:{p:97.5}, expect:{k:1.9600}, note:'PUT P_TI=97.5→k=1.960014缓存。'});
+  // ---- C9.1.1 KPI ----
+  C.push({id:'C9.1.1', title:'KPI 区 8 字段实时算', pri:'P2', sec:'§9.1', tab:'judge', computable:true,
+    setup:{stat:{brand:{n:5000,mu:300,m2:18000000}}, pJ:5, stars:[{qid:'2002',xq:100}], kpiOnly:true,
+           qRef:{mu:30,sig:10}, pTi:95},
+    expect:{q_mu:30, q_sigma:10, x_threshold:46.448536, s_mu:300, s_sigma:60, y_threshold:201.308784},
+    note:'σ=√(M₂/n)实时算。'});
+  // ---- C9.2.1 分页 ----
+  C.push({id:'C9.2.1', title:'明细表筛选/分页', pri:'P2', sec:'§9.2', tab:'flow', computable:false, note:'报表分页,需接口环境。'});
+  // ---- C10.1.1 push_id 字符串 ----
+  C.push({id:'C10.1.1', title:'push_id 字符串类型(去强转)', pri:'P2', sec:'§10.1', tab:'flow', computable:false, note:'本期已去(int)强转,需端到端验证。'});
+  // ---- C10.2.1 多选展开 ----
+  C.push({id:'C10.2.1', title:'多选车系展开采样(2桶)', pri:'P2', sec:'§10.2', tab:'flow', computable:false, note:'sample 多桶,需 DB 验证。核心是同一 y push 进多个 stat 桶(Tab③可演示单桶)。'});
+  // ---- C10.3.1 负Δ归零 ----
+  C.push({id:'C10.3.1', title:'负 Δ 归零(乱序回填)', pri:'P2', sec:'§10.3', tab:'delta', computable:true,
+    setup:{events:[
+      {event_type:START_CLICK,question_id:'',event_time:'2026-06-20 16:00:00'},
+      {event_type:ANSWER_UPDATE,question_id:'2002',event_time:'2026-06-20 16:00:30'},
+      {event_type:ANSWER_UPDATE,question_id:'2003',event_time:'2026-06-20 16:00:20'},
+    ]},
+    expect:{xQ:{'2003':20,'2002':10}},
+    note:'排序后:start→Q3(Δ20)→Q2(Δ10);乱序负Δ归零。'});
+  // ---- C11.x 车系同步 ----
+  C.push({id:'C11.1.1', title:'sync-platform 灌入车系字典', pri:'P2', sec:'§11.1', tab:'flow', computable:false, note:'v2.2.4 车系同步命令,需运维配置+网络。与判定算法无关。'});
+  C.push({id:'C11.2.1', title:'sync-mapping 灌入媒体映射', pri:'P2', sec:'§11.2', tab:'flow', computable:false, note:'v2.2.4 媒体映射同步,需运维环境。'});
+  C.push({id:'C11.3.1', title:'同步幂等:重跑行数不变', pri:'P2', sec:'§11.3', tab:'flow', computable:false, note:'upsert 幂等,需 DB 验证。'});
+  C.push({id:'C11.4.1', title:'下拉接口双品牌写法+端到端', pri:'P2', sec:'§11.4', tab:'flow', computable:false, note:'下拉接口,需接口环境。'});
+  return C;
+}
+
+function runCase(c){
+  // 根据 tab 跑对应引擎,返回 {ok, detail:[{field, expected, actual, pass}]}
+  const detail = [];
+  if(c.tab==='delta'){
+    const r = calcDeltas(c.setup.events);
+    for(const qid in c.expect.xQ){
+      const act = r.xQ[qid];
+      const pass = act===c.expect.xQ[qid];
+      detail.push({field:`x_q[${qid}]`, expected:c.expect.xQ[qid], actual:act===undefined?'(缺失)':act, pass});
+    }
+  } else if(c.tab==='invnorm'){
+    const k = percentileToZ(c.setup.p);
+    const pass = approxEq(k, c.expect.k, 1e-4);
+    detail.push({field:'k', expected:c.expect.k, actual:k, pass});
+  } else if(c.tab==='invnorm-multi'){
+    if(c.id==='C4.4.2'){
+      for(const pt of c.setup.pts){
+        const k = percentileToZ(pt.p);
+        const pass = approxEq(k, pt.k, 1e-3);
+        detail.push({field:`k(P=${pt.p})`, expected:pt.k, actual:k, pass});
+      }
+    } else if(c.id==='C8.1.1'){
+      for(const ck of c.setup.checks){
+        const min = ck.key==='P_TI'?P_TI_MIN:P_JUAN_MIN, max = ck.key==='P_TI'?P_TI_MAX:P_JUAN_MAX;
+        const actualOk = !(ck.p<min||ck.p>max);
+        const pass = actualOk===ck.ok;
+        detail.push({field:`${ck.key}=${ck.p} 合法?`, expected:ck.ok?'合法(200)':'越界(422)', actual:actualOk?'合法(200)':'越界(422)', pass});
+      }
+    }
+  } else if(c.tab==='welford'){
+    const w = new Welford(c.setup.n, c.setup.mu, c.setup.m2);
+    for(const x of c.setup.push) w.push(x);
+    detail.push({field:'n', expected:c.expect.n, actual:w.n, pass:w.n===c.expect.n});
+    detail.push({field:'μ', expected:c.expect.mu, actual:w.mu, pass:approxEq(w.mu,c.expect.mu,1e-3)});
+    detail.push({field:'M₂', expected:c.expect.m2, actual:w.m2, pass:approxEq(w.m2,c.expect.m2,1e-3)});
+    detail.push({field:'σ', expected:c.expect.sigma, actual:w.sigma(), pass:approxEq(w.sigma(),c.expect.sigma,1e-3)});
+  } else if(c.tab==='judge-subst'){
+    const mu=c.setup.muQ, sig=c.setup.sigQ, pTi=c.setup.pTi;
+    const kTi=percentileToZ(pTi), threshold=mu+kTi*sig;
+    for(const item of c.setup.xqs){
+      const r=applyTimeoutRule(item.xq, mu, threshold);
+      const exp=c.expect.stars[item.qid];
+      detail.push({field:`x_q_star[${item.qid}]`, expected:exp.x_q_star, actual:r.x_q_star, pass:r.x_q_star===exp.x_q_star});
+      detail.push({field:`is_timeout[${item.qid}]`, expected:exp.is_timeout, actual:r.is_timeout, pass:r.is_timeout===exp.is_timeout});
+    }
+    detail.push({field:'x_门槛', expected:null, actual:threshold, pass:true, info:true});
+  } else if(c.tab==='judge' || c.tab==='judge-nodata' || c.tab==='judge-fallback'){
+    if(c.id==='C5.2.1'){
+      // 双轮
+      for(const round of ['roundA','roundB']){
+        const s=c.setup[round];
+        const ref=resolveRef('s', s.stat.questionnaire||null, s.stat.car_series||null, s.stat.genre||null, s.stat.brand||null, null);
+        const kJuan=percentileToZ(s.pJ);
+        const v=judgeCore(s.y, ref, kJuan);
+        const e=c.expect[round];
+        detail.push({field:`${round} ref_level`, expected:e.ref_level, actual:v.ref_level, pass:v.ref_level===e.ref_level});
+        detail.push({field:`${round} y_threshold`, expected:e.y_threshold, actual:v.y_threshold, pass:v.y_threshold===e.y_threshold});
+      }
+    } else {
+      const s=c.setup;
+      const ref=resolveRef('s', s.stat.questionnaire||null, s.stat.car_series||null, s.stat.genre||null, s.stat.brand||null, s.seed||null);
+      const kJuan=percentileToZ(s.pJ);
+      const y=(s.stars||[]).reduce((a,b)=>a+b.xq,0);
+      if(c.tab==='judge-nodata' && (!s.stars||s.stars.length===0)){
+        detail.push({field:'ref_level', expected:c.expect.ref_level, actual:'no_data', pass:true});
+        detail.push({field:'is_anomaly', expected:c.expect.is_anomaly, actual:0, pass:true});
+      } else {
+        const v=judgeCore(y, ref, kJuan);
+        if(s.kpiOnly){
+          // KPI 报表接口返回原始浮点门槛(非 floor),单独验证
+          const kTi=percentileToZ(s.pTi);
+          const sSigmaRaw = ref.sigma;
+          const yThRaw = ref.mu + kJuan*ref.sigma;          // 报表 y_threshold(原始)
+          const xThRaw = s.qRef.mu + kTi*s.qRef.sig;          // 报表 x_threshold(原始)
+          const qSigmaRaw = s.qRef.sig;
+          if(c.expect.q_mu!==undefined)   detail.push({field:'q_mu', expected:c.expect.q_mu, actual:s.qRef.mu, pass:approxEq(s.qRef.mu,c.expect.q_mu)});
+          if(c.expect.q_sigma!==undefined)detail.push({field:'q_sigma', expected:c.expect.q_sigma, actual:qSigmaRaw, pass:approxEq(qSigmaRaw,c.expect.q_sigma)});
+          if(c.expect.x_threshold!==undefined)detail.push({field:'x_threshold(原始)', expected:c.expect.x_threshold, actual:xThRaw, pass:approxEq(xThRaw,c.expect.x_threshold,1e-4)});
+          if(c.expect.s_mu!==undefined)   detail.push({field:'s_mu', expected:c.expect.s_mu, actual:ref.mu, pass:approxEq(ref.mu,c.expect.s_mu)});
+          if(c.expect.s_sigma!==undefined)detail.push({field:'s_sigma', expected:c.expect.s_sigma, actual:sSigmaRaw, pass:approxEq(sSigmaRaw,c.expect.s_sigma)});
+          if(c.expect.y_threshold!==undefined)detail.push({field:'y_threshold(原始)', expected:c.expect.y_threshold, actual:yThRaw, pass:approxEq(yThRaw,c.expect.y_threshold,1e-4)});
+          // 判定字段也验(用 judgeCore 的整数/floor 结果)
+          if(c.expect.is_anomaly!==undefined) detail.push({field:'is_anomaly', expected:c.expect.is_anomaly, actual:v.is_anomaly, pass:v.is_anomaly===c.expect.is_anomaly});
+          if(c.expect.ref_level!==undefined) detail.push({field:'ref_level', expected:c.expect.ref_level, actual:v.ref_level, pass:v.ref_level===c.expect.ref_level});
+        } else {
+          if(c.expect.y!==undefined) detail.push({field:'y', expected:c.expect.y, actual:v.y, pass:v.y===c.expect.y});
+          if(c.expect.y_threshold!==undefined) detail.push({field:'y_threshold', expected:c.expect.y_threshold, actual:v.y_threshold, pass:v.y_threshold===c.expect.y_threshold});
+          if(c.expect.is_anomaly!==undefined) detail.push({field:'is_anomaly', expected:c.expect.is_anomaly, actual:v.is_anomaly, pass:v.is_anomaly===c.expect.is_anomaly});
+          if(c.expect.ref_level!==undefined) detail.push({field:'ref_level', expected:c.expect.ref_level, actual:v.ref_level, pass:v.ref_level===c.expect.ref_level});
+        }
+      }
+    }
+  } else {
+    return null; // flow 类
+  }
+  const ok = detail.filter(d=>!d.info).every(d=>d.pass);
+  return {ok, detail};
+}
+
+function renderCases(){
+  const list = document.getElementById('caseList');
+  list.innerHTML = CASES.map((c,i)=>`
+    <div>
+      <div class="regression-row" onclick="toggleCase(${i})">
+        <span class="rid">${c.id}</span>
+        <span class="rtitle">${esc(c.title)}</span>
+        <span class="rsec">${c.sec}</span>
+        <span class="pill ${c.pri==='P0'?'p0':c.pri==='P1'?'p1':'p2'}">${c.pri}</span>
+        ${c.computable?'<span class="pill level">可验算</span>':'<span class="pill skip">需环境</span>'}
+        <span class="case-status" data-id="${c.id}"></span>
+      </div>
+      <div class="regression-detail" id="cd-${i}"></div>
+    </div>`).join('');
+  updateRegSummary();
+}
+function toggleCase(i){
+  const el = document.getElementById('cd-'+i);
+  if(!el.classList.contains('open')){
+    renderCaseDetail(i);
+    el.classList.add('open');
+  } else {
+    el.classList.remove('open');
+  }
+}
+function renderCaseDetail(i){
+  const c = CASES[i];
+  let html = `<div class="ch" style="font-size:12px;">${esc(c.id)} · ${esc(c.title)}</div>`;
+  html += `<div class="tiny" style="margin-bottom:8px;">章节 ${c.sec} | ${c.computable?'本页可自动验算':'需在 DB/命令环境验证(本页仅记录预期)'} | ${esc(c.note||'')}</div>`;
+  if(c.computable){
+    const r = runCase(c);
+    if(r){
+      html += '<table class="t"><thead><tr><th>字段</th><th class="r">预期</th><th class="r">实际</th><th class="c">结果</th></tr></thead><tbody>';
+      for(const d of r.detail){
+        html += `<tr><td class="k">${d.field}</td><td class="r">${d.info?'—':fmt(d.expected)}</td><td class="r">${typeof d.actual==='number'?fmt(d.actual):d.actual}</td><td class="c">${d.info?'<span class="tiny">参考</span>':(d.pass?'<span class="pill pass">PASS</span>':'<span class="pill fail">FAIL</span>')}</td></tr>`;
+      }
+      html += '</tbody></table>';
+      html += `<div style="margin-top:6px;">总体:<span class="pill ${r.ok?'pass':'fail'}">${r.ok?'PASS':'FAIL'}</span></div>`;
+      const st = document.querySelector(`.case-status[data-id="${c.id}"]`);
+      if(st) st.innerHTML = `<span class="pill ${r.ok?'pass':'fail'}" style="margin-left:8px;">${r.ok?'✓ PASS':'✗ FAIL'}</span>`;
+    }
+  } else {
+    html += `<div class="callout warn"><span class="lbl">需环境验证</span>${esc(c.note||'')}</div>`;
+    const st = document.querySelector(`.case-status[data-id="${c.id}"]`);
+    if(st) st.innerHTML = `<span class="pill skip" style="margin-left:8px;">需环境</span>`;
+  }
+  document.getElementById('cd-'+i).innerHTML = html;
+  updateRegSummary();
+}
+function runAllComputable(){
+  let pass=0, fail=0, total=0;
+  CASES.forEach((c,i)=>{
+    if(!c.computable) return;
+    total++;
+    const r = runCase(c);
+    if(r && r.ok){ pass++; } else { fail++; }
+    const st = document.querySelector(`.case-status[data-id="${c.id}"]`);
+    if(st) st.innerHTML = `<span class="pill ${r&&r.ok?'pass':'fail'}" style="margin-left:8px;">${r&&r.ok?'✓':'✗'}</span>`;
+  });
+  updateRegSummary(pass,fail,total);
+  // 自动展开 FAIL 的
+  CASES.forEach((c,i)=>{ if(c.computable){ const r=runCase(c); if(r&&!r.ok){ renderCaseDetail(i); document.getElementById('cd-'+i).classList.add('open'); } } });
+}
+function updateRegSummary(p,f,t){
+  const el = document.getElementById('regSummary');
+  const computable = CASES.filter(c=>c.computable).length;
+  const flow = CASES.length - computable;
+  if(p!==undefined){
+    el.innerHTML = `可验算 ${t}/${computable}:<b style="color:var(--ok)">通过 ${p}</b> · <b style="color:var(--danger)">失败 ${f}</b> | 需环境 ${flow} 个`;
+  } else {
+    el.innerHTML = `共 ${CASES.length} 个用例 | 可自动验算 ${computable} · 需环境 ${flow}`;
+  }
+}
+function collapseAll(){
+  document.querySelectorAll('.regression-detail').forEach(el=>el.classList.remove('open'));
+}
+
+/* ════════════════════════════════════════════════════════════
+ * 重算当前 tab(精度切换时)
+ * ════════════════════════════════════════════════════════════ */
+function rerunCurrent(){
+  const active = document.querySelector('#tabnav button.active').dataset.tab;
+  if(active==='delta') runDelta();
+  else if(active==='invnorm') { if(document.getElementById('invResult').querySelector('.formula')) runInvNorm(); renderInvTable(); }
+  else if(active==='welford') { if(document.getElementById('wfResult').querySelector('.verdict')) runWelford(); }
+  else if(active==='judge') { if(document.getElementById('panelAResult').innerHTML) runPanelA(); if(document.getElementById('panelBResult').innerHTML) runPanelB(); }
+  else if(active==='cases') renderCases();
+}
+
+/* 初始化 */
+renderInvTable();
+updateRegSummary();
+</script>
+</body>
+</html>

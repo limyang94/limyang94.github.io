@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCS 答题时长异常检测 · 功能与计算逻辑说明书</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});"></script>
+<style>
+  :root{
+    --ink:#1a1f29; --ink2:#5b6473; --line:#e3e6ec; --line2:#eff1f5;
+    --bg:#fafbfc; --paper:#fff;
+    --accent:#1e5fbf; --accent-soft:#e7eefb;
+    --ok:#1f7a4d; --ok-soft:#e3f1ea;
+    --warn:#9a6b00; --warn-soft:#fbf1d7;
+    --danger:#b53624; --danger-soft:#fbe3df;
+    --code:#0a3069; --code-bg:#f4f6fa;
+    --font-display:'Inter','PingFang SC','Hiragino Sans GB','Microsoft YaHei',-apple-system,sans-serif;
+    --font-body:'Inter','PingFang SC','Hiragino Sans GB','Microsoft YaHei',-apple-system,sans-serif;
+    --font-mono:'SF Mono','JetBrains Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{background:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:15px; line-height:1.65; -webkit-font-smoothing:antialiased;}
+  .layout{display:grid; grid-template-columns:240px 1fr; max-width:1240px; margin:0 auto; gap:36px;}
+  @media(max-width:880px){.layout{grid-template-columns:1fr;}}
+
+  /* sidebar TOC */
+  aside{position:sticky; top:0; align-self:start; height:100vh; overflow:auto; padding:28px 14px 28px 22px; border-right:1px solid var(--line); background:var(--bg);}
+  @media(max-width:880px){aside{position:static; height:auto; border-right:none; border-bottom:1px solid var(--line);}}
+  aside .doc-meta{font-size:11px; color:var(--ink2); text-transform:uppercase; letter-spacing:.12em; margin-bottom:10px;}
+  aside .doc-title{font-weight:700; font-size:15px; line-height:1.35; margin-bottom:18px; color:var(--ink);}
+  aside nav a{display:block; color:var(--ink2); text-decoration:none; padding:5px 0; font-size:13px; border-left:2px solid transparent; padding-left:10px; margin-left:-10px;}
+  aside nav a:hover{color:var(--accent);}
+  aside nav a.h2{padding-left:26px; margin-left:-26px; font-size:12.5px; color:var(--ink2);}
+  aside nav .sec-num{font-family:var(--font-mono); font-size:11px; color:var(--ink2); margin-right:6px;}
+
+  main{padding:30px 28px 80px; max-width:820px;}
+  h1{font-family:var(--font-display); font-size:30px; font-weight:700; letter-spacing:-.015em; margin:0 0 4px;}
+  .subtitle{color:var(--ink2); font-size:14px; margin-bottom:6px;}
+  .meta{display:flex; gap:24px; flex-wrap:wrap; font-size:13px; color:var(--ink2); margin:14px 0 26px; padding-bottom:18px; border-bottom:2px solid var(--ink);}
+  .meta div b{color:var(--ink); font-weight:600;}
+
+  h2{font-size:22px; font-weight:700; margin:42px 0 12px; padding-top:14px; letter-spacing:-.01em; scroll-margin-top:20px;}
+  h2 .num{font-family:var(--font-mono); color:var(--ink2); margin-right:10px; font-weight:600; font-size:18px;}
+  h3{font-size:16.5px; font-weight:700; margin:26px 0 8px; color:var(--ink); scroll-margin-top:20px;}
+  h3 .num{font-family:var(--font-mono); color:var(--ink2); margin-right:8px; font-weight:600; font-size:14px;}
+  p{margin:8px 0 12px;}
+  code{font-family:var(--font-mono); font-size:13.5px; background:var(--code-bg); color:var(--code); padding:1.5px 6px; border-radius:4px;}
+  pre.code{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:14px 18px; font-family:var(--font-mono); font-size:12.5px; line-height:1.65; color:var(--ink); overflow-x:auto; margin:10px 0 14px; white-space:pre;}
+  pre.code .c{color:#6a737d; font-style:italic;}
+  strong{color:var(--ink);}
+  em{font-style:italic;}
+
+  ol, ul{padding-left:26px; margin:8px 0 14px;}
+  ol li, ul li{margin:4px 0;}
+
+  .callout{margin:14px 0 18px; padding:12px 16px; border-left:3px solid var(--accent); background:var(--accent-soft); border-radius:0 8px 8px 0; font-size:13.5px;}
+  .callout.warn{border-color:var(--warn); background:var(--warn-soft);}
+  .callout.danger{border-color:var(--danger); background:var(--danger-soft);}
+  .callout .lbl{font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink); margin-right:6px;}
+
+  table.spec{width:100%; border-collapse:collapse; font-size:13.5px; margin:12px 0 18px; background:var(--paper); border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  table.spec th, table.spec td{padding:9px 12px; text-align:left; border-bottom:1px solid var(--line2); vertical-align:top;}
+  table.spec th{background:var(--code-bg); font-weight:600; font-size:12.5px; color:var(--ink); border-bottom:1.5px solid var(--line);}
+  table.spec tr:last-child td{border-bottom:none;}
+  table.spec td.k{font-family:var(--font-mono); color:var(--code); white-space:nowrap;}
+  table.spec td.c{text-align:center;} table.spec td.r{text-align:right; font-family:var(--font-mono);}
+  table.spec .pill{display:inline-block; padding:1.5px 8px; border-radius:999px; font-size:11px; font-weight:600;}
+  .pill.required{background:var(--danger-soft); color:var(--danger);}
+  .pill.optional{background:var(--code-bg); color:var(--ink2);}
+  .pill.cfg{background:var(--accent-soft); color:var(--accent);}
+  .pill.derived{background:var(--ok-soft); color:var(--ok);}
+
+  .formula{margin:12px 0 14px; padding:6px 0;}
+  .step{display:flex; gap:14px; margin:14px 0 6px; padding:12px 14px; background:var(--paper); border:1px solid var(--line); border-radius:8px;}
+  .step .badge{font-family:var(--font-mono); font-weight:700; color:var(--paper); background:var(--ink); min-width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;}
+  .step .body{flex:1;}
+  .step .body p:first-child{margin-top:0;}
+  .step .body p:last-child{margin-bottom:0;}
+
+  .kpi-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:12px 0 18px;}
+  @media(max-width:640px){.kpi-grid{grid-template-columns:1fr 1fr;}}
+  .kpi{padding:10px 12px; background:var(--paper); border:1px solid var(--line); border-radius:7px; font-size:13px;}
+  .kpi .k{color:var(--ink2); font-size:12px; margin-bottom:4px;}
+  .kpi .v{font-weight:700; font-family:var(--font-mono);}
+
+  .ref{font-size:12.5px; color:var(--ink2);}
+  .ref a{color:var(--accent); text-decoration:none;}
+
+  /* print */
+  @media print{
+    body{background:#fff;}
+    aside{display:none;}
+    .layout{display:block; max-width:none;}
+    main{max-width:none; padding:0; margin:0;}
+    h2{page-break-after:avoid;} h3{page-break-after:avoid;}
+    .step, .callout, table.spec{page-break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- TOC -->
+<aside>
+  <div class="doc-meta">TCS · WCIP</div>
+  <div class="doc-title">答题时长异常检测<br>功能与计算逻辑说明书</div>
+  <nav>
+    <a href="#s1"><span class="sec-num">1</span>概述</a>
+    <a href="#s3"><span class="sec-num">3</span>业务计算流程</a>
+    <a href="#s3-1" class="h2">3.1 埋点设计与时间计算</a>
+    <a href="#s3-2" class="h2">3.2 第一步 · 题目维度</a>
+    <a href="#s3-3" class="h2">3.3 第二步 · 问卷维度</a>
+    <a href="#s3-4" class="h2">3.4 k 的运行时计算公式</a>
+    <a href="#s4"><span class="sec-num">4</span>关键设计原则</a>
+    <a href="#s5"><span class="sec-num">5</span>增量补偿更新公式</a>
+    <a href="#s6"><span class="sec-num">6</span>配置参数清单</a>
+  </nav>
+</aside>
+
+<main>
+
+<h1>TCS 答题时长异常检测</h1>
+<div class="subtitle">功能与计算逻辑说明书 — 含统计报表页面定义与全套数学公式</div>
+<div class="meta">
+  <div>产品 · <b>黄浩发</b></div>
+  <div>版本 · <b>v1.0</b></div>
+  <div>模块 · <b>WCIP-TCS / 统计报表 / 答题时长统计</b></div>
+  <div>关键词 · <b>积分发放审核 · 异常答题识别</b></div>
+</div>
+
+<!-- ============ 1. 概述 ============ -->
+<h2 id="s1"><span class="num">1</span>概述</h2>
+
+<p><b>业务问题。</b>积分答题环节中,部分用户存在乱答、过快敷衍答题以补领积分的行为,需要从答题时长维度进行甄别,作为发放积分的人工审核依据。同时,部分单题答题时间因用户中途离开等中断行为而异常偏长,直接计入会污染问卷整体时长统计,需要在<b>题目维度</b>先做清洗,再在<b>问卷维度</b>判断整卷是否异常。</p>
+
+<p><b>两步流程。</b>整套逻辑分两步:</p>
+<ol>
+  <li><b>第一步 · 题目维度(清洗):</b> 在车系粒度下统计单题答题时间的 $\mu$、$\sigma$,识别超过分位门槛(如 95%)的<b>超时单题</b>,以 $\tfrac{1}{3}\mu_题$ 替代后,逐份问卷求和得到<b>推定答题时长 $y$</b>。</li>
+  <li><b>第二步 · 问卷维度(判定):</b> 在车系粒度下统计 $y$ 的 $\mu_卷$、$\sigma_卷$,对每份问卷算 $Z_卷$、$P_卷$;$P_卷$ 低于阈值(如 5%)的问卷判为<b>异常·过快/乱答</b>,在人工审核表单高亮。</li>
+</ol>
+
+<p><b>统计粒度。</b>全部统计以<b>车系</b>为单位;车系样本量不足时,以<b>品牌</b>兜底。本文档中所有"全品牌 / 全车系"指的就是这两个聚合层级。</p>
+
+
+<!-- ============ 3. 业务计算流程 ============ -->
+<h2 id="s3"><span class="num">3</span>业务计算流程</h2>
+
+<h3 id="s3-1"><span class="num">3.1</span>埋点设计与单题答题时间计算</h3>
+
+<p>所有上游统计都依赖一份干净的"单题作答时间"数据 $\{x_1, x_2, \ldots\}$。它由前端两类埋点采集 + 后端简单加减得到。</p>
+
+<p><b>采集的埋点事件(共 2 类):</b></p>
+
+<table class="spec">
+  <thead><tr><th>#</th><th>事件</th><th>触发时机</th><th>记录字段</th></tr></thead>
+  <tbody>
+    <tr><td class="c">1</td><td class="k">start_click</td><td>用户点击「开始回答」按钮</td><td class="k">user_id, questionnaire_id, click_time</td></tr>
+    <tr><td class="c">2</td><td class="k">answer_update</td><td>用户某次提交或修改某道题</td><td class="k">user_id, questionnaire_id, question_id, update_time</td></tr>
+  </tbody>
+</table>
+
+<p><b>单题答题时间计算公式。</b>设某用户某次会话的事件序列(按时间升序):</p>
+<div class="formula">$$E_0 = \text{start\_click}\;(t_0),\quad E_1, E_2, \ldots, E_n = \text{answer\_update}\;(t_1,\ldots,t_n)$$</div>
+<p>记第 $i$ 个 answer_update 事件作答的题目编号为 $q_i$。事件间隔(归属给该次更新的那道题):</p>
+<div class="formula">$$\Delta_i \;=\; t_i - t_{i-1}\qquad (i = 1, 2, \ldots, n)$$</div>
+<p>某道题 $Q$ 的总答题时间 = <b>所有归属于它的间隔之和</b>(自然支持多次修改累加):</p>
+<div class="formula">$$x_Q \;=\; \sum_{\substack{1 \le i \le n \\ q_i = Q}} \Delta_i$$</div>
+
+<p><b>示例:</b>用户打开问卷,顺序答 Q1、Q2,后回去改 Q1,再答 Q3。</p>
+
+<table class="spec">
+  <thead><tr><th>事件</th><th>时间</th><th>$q_i$</th><th>$\Delta_i$</th><th>归属</th></tr></thead>
+  <tbody>
+    <tr><td class="k">start_click</td><td class="r">0 s</td><td class="c">—</td><td class="r">—</td><td class="c">—</td></tr>
+    <tr><td class="k">answer_update</td><td class="r">10 s</td><td class="c">Q1</td><td class="r">10 s</td><td class="c">Q1</td></tr>
+    <tr><td class="k">answer_update</td><td class="r">25 s</td><td class="c">Q2</td><td class="r">15 s</td><td class="c">Q2</td></tr>
+    <tr><td class="k">answer_update</td><td class="r">40 s</td><td class="c">Q1(回去修改)</td><td class="r">15 s</td><td class="c">Q1</td></tr>
+    <tr><td class="k">answer_update</td><td class="r">60 s</td><td class="c">Q3</td><td class="r">20 s</td><td class="c">Q3</td></tr>
+  </tbody>
+</table>
+
+<p>累加后:$x_{Q_1} = 10 + 15 = 25$ 秒,$x_{Q_2} = 15$ 秒,$x_{Q_3} = 20$ 秒。</p>
+
+<div class="callout">
+  <span class="lbl">两个边界情况</span>
+  <b>首题没有"上一题"</b>:第一个 answer_update 的间隔以 <code>start_click</code> 时间为锚点($t_0$ = click_time),自然处理,无需特判。<br>
+  <b>用户中途离开/接电话</b>:产生的极长间隔会被吸收到"当时正在被修改"那道题的 $x_Q$ 中。这类异常值在下一节 <b>§3.2-④/⑤</b> 的"超时题替代"环节统一处理(P题 ≥ 95% 时用 $\tfrac{1}{3}\mu_题$ 替代),采集层不做特殊处理。
+</div>
+
+<h3 id="s3-2"><span class="num">3.2</span>第一步 · 题目维度 · 推定答题时长</h3>
+
+<div class="step"><div class="badge">①</div><div class="body">
+<p><b>收集单题作答时间。</b>针对车系下所有问卷,通过埋点获得每一道单题的实际作答时间集合:</p>
+<div class="formula">$$\{x_1, x_2, x_3, \ldots, x_{n_题}\}$$</div>
+</div></div>
+
+<div class="step"><div class="badge">②</div><div class="body">
+<p><b>计算单题平均时长 $\mu_题$。</b></p>
+<div class="formula">$$\mu_题 = \frac{1}{n_题}\sum_{i=1}^{n_题} x_i$$</div>
+</div></div>
+
+<div class="step"><div class="badge">③</div><div class="body">
+<p><b>计算单题标准差 $\sigma_题$(总体标准差,除以 $n_题$)。</b></p>
+<div class="formula">$$\sigma_题 = \sqrt{\,\frac{1}{n_题}\sum_{i=1}^{n_题}(x_i - \mu_题)^2\,}$$</div>
+</div></div>
+
+<div class="step"><div class="badge">④</div><div class="body">
+<p><b>计算单题保留上限(纳入门槛时间)。</b>取 $P_{题门槛} = 95.0\%$(可配,1 位小数)。先查标准正态分位系数 $k_题$:</p>
+
+<table class="spec" style="max-width:600px;">
+  <thead><tr><th>$P_{题门槛}$</th><th>80.0%</th><th>90.0%</th><th style="background:var(--accent-soft)">95.0%(默认)</th><th>97.5%</th><th>99.0%</th></tr></thead>
+  <tbody>
+    <tr><td><b>$k_题$</b></td><td class="r">0.8416</td><td class="r">1.2816</td><td class="r" style="background:var(--accent-soft)"><b>1.6449</b></td><td class="r">1.9600</td><td class="r">2.3263</td></tr>
+  </tbody>
+</table>
+
+<p>纳入门槛时间(即页面上的"有效答题时长"):</p>
+<div class="formula">$$x_{门槛} \;=\; \mu_题 \;+\; k_题 \cdot \sigma_题$$</div>
+<p>用默认 95% 时:$x_{门槛} = \mu_题 + 1.6449\,\sigma_题$。大于该值的单题视为超时,进入第 ⑤ 步替代。</p>
+<p style="font-size:12.5px; color:var(--ink2); margin-top:6px;">($k_题$ 是从 $P_{题门槛}$ 反算的标准正态分位系数,$k_题 = \Phi^{-1}(P_{题门槛})$。配置变更时由系统计算一次存为常量,运行时只做一次乘法。)</p>
+</div></div>
+
+<div class="step"><div class="badge">⑤</div><div class="body">
+<p><b>对每道单题做超时判定与替代。</b>记某用户在该车系问卷下的某一道作答时间为 $x_i$。<b>直接对比时间与门槛即可</b>(无需计算 $Z$、$P$):</p>
+<div class="formula">$$x_i^{\,\ast} \;=\; \begin{cases}x_i, & x_i < x_{门槛}\\[4pt]\dfrac{\mu_题}{3}, & x_i \ge x_{门槛}\end{cases}$$</div>
+<p>替代系数 $\tfrac{1}{3}$ 可配置(默认即 $\mu_题$ 除以 $3$)。$x_i^{\,\ast}$ 是该题进入步 ⑥ 累加的"有效时间"。</p>
+</div></div>
+
+<div class="step"><div class="badge">⑥</div><div class="body">
+<p><b>求和得到推定答题时长 $y$。</b>对该 VIN 该问卷的全部单题:</p>
+<div class="formula">$$y \;=\; \sum_{i=1}^{n_{当份题}} x_i^{\,\ast} \qquad(\text{秒})$$</div>
+<p>页面展示时可同时给出分钟:$y\,(\text{分}) = y / 60$。</p>
+</div></div>
+
+<div class="callout">
+  <span class="lbl">为什么是"替代"而不是"剔除"</span>
+  若直接剔除超时题,不同问卷保留题数不同 → $y$ 不可比。改为以 $\tfrac{1}{3}\mu_题$ 替代后,<b>每份问卷参与求和的题数恒等于该问卷应答题数</b>,$y$ 在所有问卷之间天然可比,后续 §3.3 才有意义。
+</div>
+
+<h3 id="s3-3"><span class="num">3.3</span>第二步 · 问卷维度 · 异常判定</h3>
+
+<div class="step"><div class="badge">⑦</div><div class="body">
+<p><b>收集所有已回答问卷的推定时长。</b></p>
+<div class="formula">$$\{y_1, y_2, y_3, \ldots, y_{n_卷}\}$$</div>
+</div></div>
+
+<div class="step"><div class="badge">⑧</div><div class="body">
+<p><b>计算 $\mu_卷$。</b></p>
+<div class="formula">$$\mu_卷 \;=\; \frac{1}{n_卷}\sum_{j=1}^{n_卷} y_j$$</div>
+</div></div>
+
+<div class="step"><div class="badge">⑨</div><div class="body">
+<p><b>计算 $\sigma_卷$。</b></p>
+<div class="formula">$$\sigma_卷 = \sqrt{\,\frac{1}{n_卷}\sum_{j=1}^{n_卷}(y_j - \mu_卷)^2\,}$$</div>
+</div></div>
+
+<div class="step"><div class="badge">⑩</div><div class="body">
+<p><b>计算异常下限,直接对比判定。</b>取 $P_{卷门槛} = 5.0\%$(可配,1 位小数)。查标准正态分位系数 $k_卷$(负值,门槛在下侧):</p>
+
+<table class="spec" style="max-width:600px;">
+  <thead><tr><th>$P_{卷门槛}$</th><th>1.0%</th><th>2.5%</th><th style="background:var(--accent-soft)">5.0%(默认)</th><th>10.0%</th><th>20.0%</th></tr></thead>
+  <tbody>
+    <tr><td><b>$k_卷$</b></td><td class="r">−2.3263</td><td class="r">−1.9600</td><td class="r" style="background:var(--accent-soft)"><b>−1.6449</b></td><td class="r">−1.2816</td><td class="r">−0.8416</td></tr>
+  </tbody>
+</table>
+
+<p>异常下限(即页面上的"有效答卷时长"):</p>
+<div class="formula">$$y_{门槛} \;=\; \mu_卷 + k_卷 \cdot \sigma_卷$$</div>
+<p>用默认 5% 时:$y_{门槛} = \mu_卷 - 1.6449\,\sigma_卷$。判定规则<b>直接比时间</b>:</p>
+<div class="formula">$$y_j \;\le\; y_{门槛} \;\Longrightarrow\; \text{异常·过快}$$</div>
+<p>命中的问卷在<b>人工审核表单整行高亮</b>,作为不发积分的统计参考(最终是否发放仍以人工复核为准)。过慢的问卷不卡 —— 只设下限,不设上限。</p>
+</div></div>
+
+<h3 id="s3-4"><span class="num">3.4</span>k 的运行时计算公式</h3>
+
+<div class="formula">$$k = \Phi^{-1}(P_{门槛})$$</div>
+
+<p>PHP 实现(Acklam 近似,精度 ~$10^{-9}$;Excel <code>NORM.S.INV</code>、scipy <code>norm.ppf</code> 内部就是这个):</p>
+
+<pre class="code">function inverseNormalCDF(float $p): float
+{
+    <span class="c">// Acklam approximation</span>
+    $a = [-39.69683028665376, 220.9460984245205, -275.9285104469687,
+           138.3577518672690, -30.66479806614716, 2.506628277459239];
+    $b = [-54.47609879822406, 161.5858368580409, -155.6989798598866,
+           66.80131188771972, -13.28068155288572];
+    $c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838,
+          -2.549732539343734, 4.374664141464968, 2.938163982698783];
+    $d = [0.007784695709041462, 0.3224671290700398,
+          2.445134137142996, 3.754408661907416];
+
+    $pLow  = 0.02425;
+    $pHigh = 1 - $pLow;
+
+    if ($p &lt; $pLow) {                              <span class="c">// 下尾</span>
+        $q = sqrt(-2 * log($p));
+        $num = ((((($c[0]*$q + $c[1])*$q + $c[2])*$q + $c[3])*$q + $c[4])*$q + $c[5]);
+        $den = ((($d[0]*$q + $d[1])*$q + $d[2])*$q + $d[3])*$q + 1;
+        return $num / $den;
+    }
+    if ($p &lt;= $pHigh) {                            <span class="c">// 中间段(默认 5% / 95% 都在这)</span>
+        $q = $p - 0.5;
+        $r = $q * $q;
+        $num = ((((($a[0]*$r + $a[1])*$r + $a[2])*$r + $a[3])*$r + $a[4])*$r + $a[5]) * $q;
+        $den = (((($b[0]*$r + $b[1])*$r + $b[2])*$r + $b[3])*$r + $b[4])*$r + 1;
+        return $num / $den;
+    }
+    <span class="c">// 上尾(对称)</span>
+    $q = sqrt(-2 * log(1 - $p));
+    $num = ((((($c[0]*$q + $c[1])*$q + $c[2])*$q + $c[3])*$q + $c[4])*$q + $c[5]);
+    $den = ((($d[0]*$q + $d[1])*$q + $d[2])*$q + $d[3])*$q + 1;
+    return -$num / $den;
+}</pre>
+
+<p>调用:</p>
+
+<pre class="code">$k_ti  = inverseNormalCDF(0.95);   <span class="c">// = 1.6448536...  (k题, 默认 P题门槛=95%)</span>
+$k_juan = inverseNormalCDF(0.05);  <span class="c">// = -1.6448536... (k卷, 默认 P卷门槛=5%)</span></pre>
+
+<p style="font-size:12.5px; color:var(--ink2);">建议在配置项保存时调用一次,把结果存到表里;运行时只是一次乘法 + 一次加法。</p>
+
+<!-- ============ 4. 关键设计原则 ============ -->
+<h2 id="s4"><span class="num">4</span>关键设计原则</h2>
+
+<h3>4.1 替代而非剔除</h3>
+<p>见 §3.2 末尾说明。每份问卷参与求和的题数恒定,$y$ 跨问卷可比。</p>
+
+<h3>4.2 多层兜底链</h3>
+<p>统计 $\mu$、$\sigma$ 时按以下顺序<b>逐级回退</b>,确保参照分布来自足够大的样本(每一级的样本量门槛固定为 2000):</p>
+
+<table class="spec">
+  <thead><tr><th>层级</th><th>使用的聚合表</th><th>判定条件</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><b>① 问卷粒度</b><br><span style="color:var(--ink2); font-size:12px">最精确</span></td><td class="k">stat_questionnaire[Q]</td><td>$n_卷^{(Q)} \ge 2000$</td><td>该问卷自己的累计样本足够,直接使用</td></tr>
+    <tr><td><b>② 车系粒度</b></td><td class="k">stat_car_series[(M, T)]</td><td>$n_卷^{(M,T)} \ge 2000$</td><td>退到"该问卷所属车系 × 类型"层(类型相同保证样本同质)</td></tr>
+    <tr><td><b>③ 问卷类型粒度</b></td><td class="k">stat_questionnaire_type[T]</td><td>$n_卷^{(T)} \ge 2000$</td><td>退到"该问卷类型全量"(跨车系汇总)</td></tr>
+    <tr><td><b>④ 全品牌粒度</b><br><span style="color:var(--ink2); font-size:12px">最兜底</span></td><td class="k">stat_brand[B]</td><td>无条件</td><td>万能兜底,n 通常在百万级,$\mu$、$\sigma$ 极稳定</td></tr>
+  </tbody>
+</table>
+
+<p>查找时从 ① 开始,$n_卷$ 不足就下沉到下一级,直到命中或落到 ④。题目级($\mu_题$、$\sigma_题$)用同一套查找路径,只是读 q_n / q_mu / q_m2 而非 s_n / s_mu / s_m2。</p>
+
+<div class="callout">
+  <span class="lbl">为什么逐级回退而不直接用品牌</span>
+  车系/类型层离当前问卷的样本群最近(同车系、同类型的答题分布最接近);只有当这一层样本太小、统计不稳时,才退一步换更大的池子。这样既保留了精度,又规避了小样本误判。
+</div>
+
+<h3>4.3 向后运用 · 不回溯 · 提交即冻结</h3>
+<p>每当一份新问卷提交时,系统先用增量公式更新 $\mu$、$\sigma$(见 §5),再用门槛对比该问卷的 $y$ 与 $y_{门槛}$ 判定异常,结论<b>冻结</b>。已存在问卷的判定不再回溯重算。这样实现 $O(1)$ 入库,且发放结论可追溯。</p>
+
+<h3>4.4 单位以秒为底</h3>
+<p>$\mu$、$\sigma$、$y$、$x_{门槛}$、$y_{门槛}$ 在数据库与展示中<b>统一以秒为单位</b>,因为以分钟存 2 位小数会损失约 0.6 秒/档的精度;$y$ 在审核表单中可附加分钟列以便阅读。</p>
+
+<h3>4.5 单位无关性</h3>
+<p>$Z$ 是无量纲量。对任意正常数 $k$,以 $kx$ 为输入计算:</p>
+<div class="formula">$$Z = \frac{kx - k\mu}{k\sigma} = \frac{x - \mu}{\sigma}$$</div>
+<p>故 $Z$、$P$、异常判定与"用秒还是用分钟"<b>结果完全相同</b>,改单位只影响显示精度。</p>
+
+<!-- ============ 5. 增量补偿更新公式 ============ -->
+<h2 id="s5"><span class="num">5</span>增量补偿更新公式</h2>
+
+<p>每次有新数据无需全量重算 $\mu$、$\sigma$。维护三个滚动量即可:</p>
+<div class="formula">$$\big(n,\ \mu,\ \sigma\big) \quad \text{(题目级、问卷级各一套,按车系/品牌存)}$$</div>
+<p>下面公式给出的是<b>精确值</b>,与全量重算的结果完全一致(非近似)。</p>
+
+<h3>5.1 ① 单值补偿(来一个新 $x$)</h3>
+<p>设当前为 $(n,\mu,\sigma)$,新到一个 $x$:</p>
+<div class="formula">$$n' = n + 1$$</div>
+<div class="formula">$$\mu' = \mu + \frac{x - \mu}{n'}$$</div>
+<div class="formula">$$\sigma'^{\,2} = \frac{n\,\sigma^{2} + (x-\mu)(x-\mu')}{n'}, \qquad \sigma' = \sqrt{\sigma'^{\,2}}$$</div>
+<p>注意分子中是 $(x-\mu)$ 与 $(x-\mu')$ 两个<b>不同</b>的差,这是 Welford 的数值稳定形式。</p>
+
+<h3>5.2 ② 批量合并(来一批新数据)</h3>
+<p>已有聚合 $A=(n_A,\mu_A,\sigma_A)$,新一批先在批内独立算出 $B=(n_B,\mu_B,\sigma_B)$,合并:</p>
+<div class="formula">$$n = n_A + n_B, \qquad \delta = \mu_B - \mu_A$$</div>
+<div class="formula">$$\mu = \mu_A + \delta\cdot\frac{n_B}{n}$$</div>
+<div class="formula">$$\sigma^{2} = \frac{\,n_A\,\sigma_A^{2} + n_B\,\sigma_B^{2} + \delta^{2}\cdot\dfrac{n_A\, n_B}{n}\,}{n}, \qquad \sigma = \sqrt{\sigma^2}$$</div>
+<p>适用于"每天后台跑一次"或"一份问卷整批入库"等场景。</p>
+
+<h3>5.3 ③ Z、P 的处理(瞬时计算 + 冻结)</h3>
+<p>$Z$、$P$ 不是累积量,无需"增量更新"。对任意 $x_i$:</p>
+<div class="formula">$$Z_i = \frac{x_i - \mu}{\sigma}, \qquad P_i = \Phi(Z_i)$$</div>
+<p>新数据到达时的步骤:</p>
+<ol>
+  <li>先用 ① 或 ② 更新 $\mu$、$\sigma$。</li>
+  <li>对<b>新提交</b>的这一条算其 $Z$、$P$,并<b>冻结落库</b>。</li>
+  <li>已存在记录的旧 $Z$、$P$ <b>不重算</b>(向后运用,见 §4.3)。</li>
+</ol>
+
+<h3>5.4 ④ 等价的简单写法(累加和)</h3>
+<p>若实现上不便存 $\sigma$,可改存两个累加和 $S_1 = \sum x$、$S_2 = \sum x^2$ 与 $n$:</p>
+<div class="formula">$$\text{新}\,x:\;\; S_1\mathrel{+}= x,\;\; S_2\mathrel{+}= x^{2},\;\; n\mathrel{+}= 1$$</div>
+<div class="formula">$$\mu = \frac{S_1}{n}, \qquad \sigma = \sqrt{\,\frac{S_2}{n} - \mu^{2}\,}$$</div>
+<div class="callout warn">
+  <span class="lbl">注意</span>
+  当 $n$ 极大(数百万级),$\dfrac{S_2}{n} - \mu^2$ 是两个大数相减,可能出现严重精度损失(灾难性抵消)。建议海量数据场景使用 §5.1 的 Welford 写法,或显式维护 $M_2 = \sum(x_i - \mu)^2 = n\sigma^2$ 作为状态。
+</div>
+
+<h3>5.5 两个层级用同一套</h3>
+<table class="spec">
+  <thead><tr><th>层级</th><th>$x$ 是什么</th><th>状态</th></tr></thead>
+  <tbody>
+    <tr><td>题目级</td><td>单题作答时间(秒)</td><td>$(n_题, \mu_题, \sigma_题)$,按车系存</td></tr>
+    <tr><td>问卷级</td><td>问卷推定时长 $y$(秒)</td><td>$(n_卷, \mu_卷, \sigma_卷)$,按车系存</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 6. 参数 ============ -->
+<h2 id="s6"><span class="num">6</span>配置参数清单</h2>
+
+<table class="spec">
+  <thead><tr><th>参数</th><th>含义</th><th>默认值</th><th>取值</th><th>影响</th></tr></thead>
+  <tbody>
+    <tr><td class="k">P题门槛</td><td>题目级超时分位门槛</td><td>95.0%</td><td>50.0% – 99.9%(步长 0.1%)</td><td>$x_{门槛}$,替代发生频率</td></tr>
+    <tr><td class="k">P卷门槛</td><td>问卷级异常分位门槛</td><td>5.0%</td><td>0.1% – 50.0%(步长 0.1%)</td><td>$y_{门槛}$,异常率</td></tr>
+  </tbody>
+</table>
+
+<p style="font-size:13px; color:var(--ink2); margin-top:12px;">其他常量(替代系数 $\tfrac{1}{3}$、兜底样本量门槛 2000、展示单位"秒 + 分")<b>写死在代码中</b>,不暴露给用户配置;如需调整需走代码变更流程。</p>
+
+<hr style="border:none;border-top:1px solid var(--line);margin:38px 0 18px;">
+<p class="ref">本文档为 WCIP-TCS 项目交付物;后续版本变更请在 §1 顶端的版本号同步标注。</p>
+
+</main>
+</div>
+</body>
+</html>

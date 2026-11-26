@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCS 答题时长异常检测 · 业务方使用手册</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});"></script>
+<style>
+  :root{
+    --ink:#1a1f29; --ink2:#5b6473; --line:#e3e6ec; --line2:#eff1f5;
+    --bg:#fafbfc; --paper:#fff;
+    --accent:#1e5fbf; --accent-soft:#e7eefb;
+    --ok:#1f7a4d; --ok-soft:#e3f1ea;
+    --warn:#9a6b00; --warn-soft:#fbf1d7;
+    --danger:#b53624; --danger-soft:#fbe3df;
+    --code:#0a3069; --code-bg:#f4f6fa;
+    --font-display:'Inter','PingFang SC','Hiragino Sans GB','Microsoft YaHei',-apple-system,sans-serif;
+    --font-body:'Inter','PingFang SC','Hiragino Sans GB','Microsoft YaHei',-apple-system,sans-serif;
+    --font-mono:'SF Mono','JetBrains Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{background:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:15px; line-height:1.7; -webkit-font-smoothing:antialiased;}
+  .layout{display:grid; grid-template-columns:240px 1fr; max-width:1240px; margin:0 auto; gap:36px;}
+  @media(max-width:880px){.layout{grid-template-columns:1fr;}}
+
+  aside{position:sticky; top:0; align-self:start; height:100vh; overflow:auto; padding:28px 14px 28px 22px; border-right:1px solid var(--line); background:var(--bg);}
+  @media(max-width:880px){aside{position:static; height:auto; border-right:none; border-bottom:1px solid var(--line);}}
+  aside .doc-meta{font-size:11px; color:var(--ink2); text-transform:uppercase; letter-spacing:.12em; margin-bottom:10px;}
+  aside .doc-title{font-weight:700; font-size:15px; line-height:1.35; margin-bottom:18px; color:var(--ink);}
+  aside nav a{display:block; color:var(--ink2); text-decoration:none; padding:5px 0; font-size:13px; border-left:2px solid transparent; padding-left:10px; margin-left:-10px;}
+  aside nav a:hover{color:var(--accent);}
+  aside nav a.h2{padding-left:26px; margin-left:-26px; font-size:12.5px; color:var(--ink2);}
+  aside nav .sec-num{font-family:var(--font-mono); font-size:11px; color:var(--ink2); margin-right:6px;}
+
+  main{padding:30px 28px 80px; max-width:820px;}
+  h1{font-family:var(--font-display); font-size:30px; font-weight:700; letter-spacing:-.015em; margin:0 0 4px;}
+  .subtitle{color:var(--ink2); font-size:14px; margin-bottom:6px;}
+  .meta{display:flex; gap:24px; flex-wrap:wrap; font-size:13px; color:var(--ink2); margin:14px 0 26px; padding-bottom:18px; border-bottom:2px solid var(--ink);}
+  .meta div b{color:var(--ink); font-weight:600;}
+
+  h2{font-size:22px; font-weight:700; margin:42px 0 12px; padding-top:14px; letter-spacing:-.01em; scroll-margin-top:20px;}
+  h2 .num{font-family:var(--font-mono); color:var(--ink2); margin-right:10px; font-weight:600; font-size:18px;}
+  h3{font-size:16.5px; font-weight:700; margin:26px 0 8px; color:var(--ink); scroll-margin-top:20px;}
+  h3 .num{font-family:var(--font-mono); color:var(--ink2); margin-right:8px; font-weight:600; font-size:14px;}
+  h4{font-size:14.5px; font-weight:700; margin:18px 0 6px; color:var(--ink);}
+  p{margin:8px 0 12px;}
+  code{font-family:var(--font-mono); font-size:13.5px; background:var(--code-bg); color:var(--code); padding:1.5px 6px; border-radius:4px;}
+  strong{color:var(--ink);}
+  em{font-style:italic;}
+
+  ol, ul{padding-left:26px; margin:8px 0 14px;}
+  ol li, ul li{margin:5px 0;}
+
+  .callout{margin:14px 0 18px; padding:12px 16px; border-left:3px solid var(--accent); background:var(--accent-soft); border-radius:0 8px 8px 0; font-size:13.5px;}
+  .callout.warn{border-color:var(--warn); background:var(--warn-soft);}
+  .callout.danger{border-color:var(--danger); background:var(--danger-soft);}
+  .callout.ok{border-color:var(--ok); background:var(--ok-soft);}
+  .callout .lbl{font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink); margin-right:6px;}
+
+  table.spec{width:100%; border-collapse:collapse; font-size:13px; margin:12px 0 18px; background:var(--paper); border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  table.spec th, table.spec td{padding:8px 10px; text-align:left; border-bottom:1px solid var(--line2); vertical-align:top;}
+  table.spec th{background:var(--code-bg); font-weight:600; font-size:12.5px; color:var(--ink); border-bottom:1.5px solid var(--line);}
+  table.spec tr:last-child td{border-bottom:none;}
+  table.spec td.k{font-family:var(--font-mono); color:var(--code); white-space:nowrap;}
+  table.spec td.c{text-align:center;}
+  table.spec .pill{display:inline-block; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:600;}
+  .pill.red{background:var(--danger-soft); color:var(--danger);}
+  .pill.green{background:var(--ok-soft); color:var(--ok);}
+  .pill.gray{background:var(--code-bg); color:var(--ink2);}
+  .pill.yellow{background:var(--warn-soft); color:var(--warn);}
+  .pill.blue{background:var(--accent-soft); color:var(--accent);}
+
+  .screen{margin:16px 0; padding:16px 18px; background:var(--paper); border:1px solid var(--line); border-radius:10px;}
+  .screen .scr-title{font-weight:700; font-size:13px; color:var(--accent); margin-bottom:4px; text-transform:uppercase; letter-spacing:.04em;}
+  .screen .scr-desc{font-size:12.5px; color:var(--ink2); margin-bottom:12px;}
+
+  .faq{margin:14px 0; padding:14px 16px; background:var(--paper); border:1px solid var(--line); border-radius:8px; border-left:4px solid var(--warn);}
+  .faq .q{font-weight:700; font-size:13.5px; color:var(--ink); margin-bottom:6px;}
+  .faq .q::before{content:"Q "; color:var(--warn); font-family:var(--font-mono);}
+  .faq .a{font-size:13px; color:var(--ink2);}
+  .faq .a::before{content:"A "; color:var(--ok); font-family:var(--font-mono); font-weight:700;}
+
+  .kpi-row{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:10px 0;}
+  @media(max-width:640px){.kpi-row{grid-template-columns:1fr 1fr;}}
+  .kpi-box{padding:10px 12px; background:var(--bg); border:1px solid var(--line); border-radius:7px;}
+  .kpi-box .lbl{font-size:11px; color:var(--ink2); margin-bottom:3px;}
+  .kpi-box .val{font-family:var(--font-mono); font-weight:700; font-size:15px;}
+  .kpi-box.ti{border-color:var(--accent); background:var(--accent-soft);}
+  .kpi-box.juan{border-color:var(--warn); background:var(--warn-soft);}
+
+  .ref{font-size:12.5px; color:var(--ink2);}
+  .ref a{color:var(--accent); text-decoration:none;}
+
+  @media print{
+    body{background:#fff;}
+    aside{display:none;}
+    .layout{display:block; max-width:none;}
+    main{max-width:none; padding:0; margin:0;}
+    h2{page-break-after:avoid;} h3{page-break-after:avoid;}
+    .callout, table.spec, .screen, .faq{page-break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside>
+  <div class="doc-meta">TCS · 业务手册</div>
+  <div class="doc-title">答题时长异常检测<br>业务方使用手册</div>
+  <nav>
+    <a href="#s1"><span class="sec-num">1</span>这个功能是干什么的</a>
+    <a href="#s2"><span class="sec-num">2</span>我能在哪里看到它</a>
+    <a href="#s3"><span class="sec-num">3</span>审核表单怎么看</a>
+    <a href="#s3-1" class="h2">3.1 异常标记与高亮</a>
+    <a href="#s3-2" class="h2">3.2 推定答题时长</a>
+    <a href="#s3-3" class="h2">3.3 参照层级</a>
+    <a href="#s3-4" class="h2">3.4 审核建议流程</a>
+    <a href="#s4"><span class="sec-num">4</span>统计报表怎么看</a>
+    <a href="#s4-1" class="h2">4.1 KPI 区</a>
+    <a href="#s4-2" class="h2">4.2 三个明细表</a>
+    <a href="#s5"><span class="sec-num">5</span>配置参数怎么调</a>
+    <a href="#s5-1" class="h2">5.1 两个门槛</a>
+    <a href="#s5-2" class="h2">5.2 调参影响</a>
+    <a href="#s5-3" class="h2">5.3 调参原则</a>
+    <a href="#s6"><span class="sec-num">6</span>各种状态怎么看</a>
+    <a href="#s7"><span class="sec-num">7</span>常见问题 FAQ</a>
+    <a href="#s8"><span class="sec-num">8</span>一句话速查</a>
+  </nav>
+</aside>
+
+<main>
+
+<h1>TCS 答题时长异常检测 · 业务方使用手册</h1>
+<div class="subtitle">面向审核员 / 运营 / 产品 — 怎么用这个功能识别乱答、辅助积分审核决策</div>
+<div class="meta">
+  <div>产品 · <b>黄浩发</b></div>
+  <div>版本 · <b>v1.0</b></div>
+  <div>读者 · <b>审核员 / 运营 / 产品</b></div>
+  <div>模块 · <b>WCIP-TCS / 积分审核</b></div>
+</div>
+
+<!-- ============ 1. 是干什么的 ============ -->
+<h2 id="s1"><span class="num">1</span>这个功能是干什么的</h2>
+
+<p><b>一句话:自动标出"答得太快、可能是乱答"的答卷,帮你决定要不要发积分。</b></p>
+
+<p>背景:积分答题环节里,有部分用户为了薅积分,会<b>飞快地乱点一通</b>提交问卷。这类答卷的特征是<b>整体答题时间极短</b>,明显低于正常用户。光看单份卷很难判断,但放到"同品牌/同车系所有答卷"里一比,异常短的就很扎眼。</p>
+
+<p>这个功能就是<b>替你做这个比较</b>:系统会统计每个品牌/车系下所有答卷的答题时长分布,自动算出一个"正常下限"(称为<b>有效答卷时长</b>),凡是<b>低于这个下限</b>的答卷,就标记为<b>"时长异常"</b>,在审核表单里高亮提醒你重点关注。</p>
+
+<div class="callout">
+  <span class="lbl">核心定位(很重要)</span>
+  本功能<b>只提供"可疑"信号,不自动处置</b>。被标异常的卷不会自动拒发积分,正常卷也不会被改判。<b>最终是否发放积分,始终由你(审核员)人工决定。</b>系统只是帮你把"最值得怀疑的卷"排到前面、标红提醒,节省你逐份排查的时间。
+</div>
+
+<h3>它解决什么具体问题</h3>
+<table class="spec">
+  <thead><tr><th>痛点</th><th>本功能怎么帮</th></tr></thead>
+  <tbody>
+    <tr><td>乱答卷混在正常卷里,人工逐份看耗时</td><td>异常卷自动标红 + 可"异常优先"排序,可疑的排最前</td></tr>
+    <tr><td>"多短算乱答"没有客观标准,审核口径不一</td><td>用统计方法算出统一阈值(品牌/车系维度),全团队同一把尺</td></tr>
+    <tr><td>用户中途离开导致某题超长,拉高整卷时长,掩盖乱答</td><td>单题层面先清洗(超长题按均值1/3折算),再判整卷,避免被离群值干扰</td></tr>
+    <tr><td>新问卷上线没历史数据,无法判定</td><td>4 层参照回退 + 种子值兜底,新问卷也能用品牌层/种子值判</td></tr>
+  </tbody>
+</table>
+
+<h3>它不解决什么(边界)</h3>
+<ul>
+  <li><b>不判断"答案内容对不对"</b>——只看答题快慢,不看答案本身质量(那是 NPS/NSS 规则的职责)。</li>
+  <li><b>不抓"答得慢但乱答"的卷</b>——只设下限(过快),不设上限(过慢)。故意磨蹭的乱答卷不在本功能范围。</li>
+  <li><b>不自动拒发积分</b>——标记仅供参考,处置权在你。</li>
+</ul>
+
+<!-- ============ 2. 在哪看到 ============ -->
+<h2 id="s2"><span class="num">2</span>我能在哪里看到它</h2>
+
+<p>本功能不独立成页,它<b>嵌在已有的两个地方</b>,在你原来的工作流里自然出现:</p>
+
+<table class="spec">
+  <thead><tr><th>位置</th><th>看到什么</th><th>谁用</th></tr></thead>
+  <tbody>
+    <tr><td><b>① 积分审核表单</b><br><span style="color:var(--ink2);font-size:12px;">答卷列表 + 审核详情页</span></td><td>每份卷的"时长异常"红标 + 推定答题时长 + 参照层级;可筛选"只看异常"、可"异常优先排序"</td><td>审核员(日常)</td></tr>
+    <tr><td><b>② 答题时长统计报表</b><br><span style="color:var(--ink2);font-size:12px;">统计菜单下</span></td><td>品牌/车系/类型/问卷四个维度的答题时长分布、有效时长阈值、样本量</td><td>运营/产品(看数据健康度、调阈值)</td></tr>
+    <tr><td><b>③ 分位门槛配置</b><br><span style="color:var(--ink2);font-size:12px;">配置菜单下</span></td><td>调整"题门槛""卷门槛"两个参数(见 §5)</td><td>产品/运营(调参)</td></tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <span class="lbl">数据时延</span>
+  时长数据<b>不是实时的</b>。用户答题的原始数据由数据组 T+1 推送,系统每天凌晨跑批计算后,异常标记才会更新。所以<b>今天提交的卷,标记最早明天才出现</b>。这是正常时延,不是故障。
+</div>
+
+<!-- ============ 3. 审核表单 ============ -->
+<h2 id="s3"><span class="num">3</span>审核表单怎么看(审核员必读)</h2>
+<p>这是审核员每天接触最多的地方。本功能在原有的答卷列表和详情页上,新增了几个字段和操作。</p>
+
+<h3 id="s3-1"><span class="num">3.1</span>异常标记与列表高亮</h3>
+
+<div class="screen">
+  <div class="scr-title">答卷列表新增内容</div>
+  <div class="scr-desc">在"待审核/已审核"答卷列表里,每行会多出以下信息:</div>
+  <table class="spec">
+    <thead><tr><th>字段</th><th>长什么样</th><th>含义</th><th>你怎么用</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">时长异常标记<br><small>is_duration_anomaly</small></td>
+        <td><span class="pill red">异常</span> 或 <span class="pill green">正常</span> 或 <span class="pill gray">—</span></td>
+        <td>1=异常·过快(低于有效答卷时长);0=正常;空=尚未评估</td>
+        <td><b>红标</b>的卷重点看,很可能是乱答;绿标的卷可快速过</td>
+      </tr>
+      <tr>
+        <td class="k">推定答题时长<br><small>y_duration</small></td>
+        <td>如 <code>73 秒</code> / <code>1.2 分</code></td>
+        <td>用户答完整份卷的推定耗时(已剔除中途离开的干扰,见 §3.2)</td>
+        <td>数字越小越可疑;对比"有效答卷时长"看差多少</td>
+      </tr>
+      <tr>
+        <td class="k">参照层级<br><small>duration_ref_level_label</small></td>
+        <td>如 <span class="pill blue">问卷层</span> / <span class="pill yellow">品牌层</span> / <span class="pill gray">样本不足</span></td>
+        <td>判异常时用的是哪一层的统计数据(见 §3.3,影响结论可信度)</td>
+        <td>层级越精确(问卷层)越可信;品牌层/样本不足的要谨慎</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h4>列表的两个新操作</h4>
+<table class="spec">
+  <thead><tr><th>操作</th><th>怎么用</th><th>什么时候用</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="k">筛选"只看异常"</td>
+      <td>列表筛选条件选 <code>is_duration_anomaly=1</code></td>
+      <td>积压量大时,先集中处理所有可疑卷,提升效率</td>
+    </tr>
+    <tr>
+      <td class="k">异常优先排序</td>
+      <td>排序开关 <code>sort_duration_anomaly=true</code></td>
+      <td>不筛只排,异常卷排最前,正常卷在后,顺序处理</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout ok">
+  <span class="lbl">推荐审核姿势</span>
+  日常审核建议:<b>开"异常优先排序"</b>,异常卷(红标)排最前 → 逐份重点核对答案内容 → 决定发/不发积分 → 处理完异常的,再批量过正常卷(绿标)。这样把有限时间花在最可疑的样本上。
+</div>
+
+<h3 id="s3-2"><span class="num">3.2</span>"推定答题时长"是什么(为什么不是简单求和)</h3>
+
+<p>你看到的"推定答题时长"<b>不是用户从打开到提交的墙钟时间</b>,而是系统清洗后的一个可比指标。清洗逻辑:</p>
+
+<div class="screen">
+  <div class="scr-title">推定时长的计算思路(不用记公式,理解逻辑即可)</div>
+  <ol>
+    <li><b>逐题计时。</b>系统按用户每次点击事件,算出每道题实际花了多少秒(支持来回修改累加)。</li>
+    <li><b>剔除超长单题。</b>如果某道题耗时异常长(比如用户接了个电话没动),超过该品牌单题时长的 95 分位,就把它<b>按均值的 1/3 折算</b>,不让它拉高整卷时长。</li>
+    <li><b>求和得整卷时长。</b>把折算后的各题时长加起来,就是"推定答题时长" $y$。</li>
+  </ol>
+  <p style="font-size:12.5px;color:var(--ink2);margin-top:8px;">这样做的好处:即使用户某道题离开很久,也不会被当成"认真答了很久",乱答卷无处遁形。不同问卷的题数不同,但每份卷参与求和的题数恒定,时长跨卷可比。</p>
+</div>
+
+<div class="callout">
+  <span class="lbl">为什么叫"推定"</span>
+  因为单题层面做了 1/3 折算(不是用户真实停留时间),所以叫"推定"——它是<b>用于判异常的可比指标</b>,不等于用户真实答题时长。如果你想看真实耗时,这个值会偏小(超长题被压低了)。
+</div>
+
+<h3 id="s3-3"><span class="num">3.3</span>"参照层级"怎么看(判断结论可信度)</h3>
+
+<p>判一份卷是否异常,需要跟"同类的统计分布"比。但有些问卷样本多、有些样本少,系统会<b>按样本量从精确到粗放逐级找参照</b>。这个层级决定了你对该结论的<b>信任程度</b>。</p>
+
+<table class="spec">
+  <thead><tr><th>参照层级(标签)</th><th>用的什么数据</th><th>可信度</th><th>你的判断</th></tr></thead>
+  <tbody>
+    <tr><td><span class="pill blue">问卷层</span></td><td>该问卷自己的历史样本(≥2000份)</td><td><span class="pill green">高</span> 最准</td><td>异常标记可直接采信</td></tr>
+    <tr><td><span class="pill blue">车系层</span></td><td>同品牌+同车系+同类型的样本</td><td><span class="pill green">较高</span></td><td>基本可采信</td></tr>
+    <tr><td><span class="pill blue">类型层</span></td><td>同品牌+同类型(跨车系)样本</td><td><span class="pill yellow">中</span></td><td>参考,结合答案内容看</td></tr>
+    <tr><td><span class="pill yellow">品牌层</span></td><td>同品牌全量样本(最粗放)</td><td><span class="pill yellow">中低</span></td><td>谨慎,差异可能源于问卷难度不同</td></tr>
+    <tr><td><span class="pill gray">种子值</span></td><td>运营预填的初始 μ/σ(冷启动)</td><td><span class="pill yellow">低</span></td><td>仅供参考,优先人工核对</td></tr>
+    <tr><td><span class="pill gray">样本不足</span></td><td>4 层都达不到 2000 样本</td><td><span class="pill red">无</span></td><td><b>系统未判异常</b>,需完全人工</td></tr>
+    <tr><td><span class="pill gray">无数据</span></td><td>明细数据还没跑出来</td><td><span class="pill red">无</span></td><td>等明日跑批后再看,或人工核</td></tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <span class="lbl">审核要诀</span>
+  看到<b>异常标记时,先看参照层级</b>:<br>
+  • <b>问卷层/车系层</b>标的异常 → 可信度高,重点怀疑;<br>
+  • <b>品牌层/种子值</b>标的异常 → 样本不够精确,异常可能是因为该问卷本身偏难/偏易,<b>务必核对答案内容</b>再定;<br>
+  • <b>样本不足/无数据</b> → 系统没下结论,你正常审核即可,别因为没有异常标记就放松警惕。
+</div>
+
+<h3 id="s3-4"><span class="num">3.4</span>审核决策建议流程</h3>
+<p>拿到一份卷后,结合时长标记的推荐流程:</p>
+<div class="screen">
+  <div class="scr-title">单份卷审核步骤(融合时长标记)</div>
+  <ol>
+    <li><b>看异常标记。</b>红标(异常)进入重点核查;绿标(正常)可走快通道。</li>
+    <li><b>看参照层级。</b>问卷层/车系层 → 信任度高;品牌层/种子值 → 降一档信任;样本不足/无数据 → 无视标记,纯人工。</li>
+    <li><b>看推定时长 vs 有效答卷时长。</b>(详情页会同时显示这卷的 $y$ 和当时冻结的 $y_{门槛}$。)差距越大越可疑。</li>
+    <li><b>核对答案内容。</b>结合原有的 NPS/NSS 规则、答案文字质量,综合判断。<b>时长只是参考之一,不是唯一依据。</b></li>
+    <li><b>下结论。</b>发/不发积分的决策权在你;时长异常可作为"拒发"的理由之一,但不强制。</li>
+  </ol>
+</div>
+
+<div class="callout danger">
+  <span class="lbl">两个常见误用(务必避免)</span>
+  <b>误用一:</b>看到异常标记就一律拒发 → 会误伤偏难问卷的正常用户(品牌层误判)。<b>异常≠必定乱答。</b><br>
+  <b>误用二:</b>看到绿标就闭眼过 → 绿标只代表时长正常,不代表答案没问题(可能是慢慢乱答)。<b>正常≠必定合规。</b>
+</div>
+
+<!-- ============ 4. 报表 ============ -->
+<h2 id="s4"><span class="num">4</span>统计报表怎么看(运营/产品必读)</h2>
+<p>报表页是给运营和产品看"数据健康度"的,不直接用于单卷审核。位置:统计菜单 → 答题时长统计。</p>
+
+<h3 id="s4-1"><span class="num">4.1</span>KPI 区(品牌层概览)</h3>
+<p>选一个品牌后,顶部 KPI 区显示 8 个指标,分两组:</p>
+
+<div class="kpi-row">
+  <div class="kpi-box ti"><div class="lbl">单题样本量 n题</div><div class="val">5,000</div></div>
+  <div class="kpi-box ti"><div class="lbl">单题均值 μ题</div><div class="val">30 秒</div></div>
+  <div class="kpi-box ti"><div class="lbl">单题标准差 σ题</div><div class="val">10 秒</div></div>
+  <div class="kpi-box ti"><div class="lbl">有效答题时长 x门槛</div><div class="val">46.4 秒</div></div>
+</div>
+<div class="kpi-row">
+  <div class="kpi-box juan"><div class="lbl">答卷样本量 n卷</div><div class="val">5,000</div></div>
+  <div class="kpi-box juan"><div class="lbl">答卷均值 μ卷</div><div class="val">300 秒</div></div>
+  <div class="kpi-box juan"><div class="lbl">答卷标准差 σ卷</div><div class="val">60 秒</div></div>
+  <div class="kpi-box juan"><div class="lbl">有效答卷时长 y门槛</div><div class="val">201 秒</div></div>
+</div>
+
+<table class="spec">
+  <thead><tr><th>指标</th><th>含义</th><th>你怎么理解</th></tr></thead>
+  <tbody>
+    <tr><td class="k">单题均值 μ题</td><td>该品牌下所有单题的平均作答时长</td><td>用户答一道题通常花多久</td></tr>
+    <tr><td class="k">单题标准差 σ题</td><td>单题时长的离散程度</td><td>越大说明答题快慢差异越大</td></tr>
+    <tr><td class="k">有效答题时长 x门槛</td><td>单题"超时"判定线(μ题 + 1.6449×σ题)</td><td><b>超过此值的单题会被按 μ题/3 折算</b>,不直接计入整卷</td></tr>
+    <tr><td class="k">答卷均值 μ卷</td><td>该品牌下所有答卷的推定时长均值</td><td>正常用户答完整份卷通常花多久</td></tr>
+    <tr><td class="k">答卷标准差 σ卷</td><td>答卷时长的离散程度</td><td>越大说明卷间差异越大</td></tr>
+    <tr><td class="k">有效答卷时长 y门槛</td><td>答卷"异常·过快"判定线(μ卷 − 1.6449×σ卷)</td><td><b>低于此值的卷会被标"时长异常"</b>,即审核表单看到的红线</td></tr>
+    <tr><td class="k">样本量 n</td><td>参与统计的样本数</td><td>≥2000 才稳定;<2000 会触发层级回退(见 §3.3)</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <span class="lbl">关键认知</span>
+  <b>"有效答卷时长"就是审核表单里判异常的那条线</b>。报表上看到品牌层 $y_{门槛}=201$ 秒,意味着该品牌下推定时长 ≤201 秒的卷都会被标异常。这个值每天随样本更新而变化,但已审核卷的判定<b>不回算</b>(见 §5.2)。
+</div>
+
+<h3 id="s4-2"><span class="num">4.2</span>三个明细表(维度下钻)</h3>
+<p>KPI 下方有三个并列明细表,从粗到细看不同维度:</p>
+<table class="spec">
+  <thead><tr><th>表</th><th>每行是什么</th><th>典型用途</th></tr></thead>
+  <tbody>
+    <tr><td><b>问卷维度</b></td><td>一行一个问卷(最细)</td><td>查"某个问卷是不是异常特别多"——可能该问卷题目设计有问题</td></tr>
+    <tr><td><b>车系维度</b></td><td>一行一个(品牌+车系+类型)组合</td><td>查"哪个车系的用户答题偏快/偏慢",辅助问卷优化</td></tr>
+    <tr><td><b>类型维度</b></td><td>一行一个(品牌+问卷类型)</td><td>对比不同类型(销售/售后/车险...)的答题特征</td></tr>
+  </tbody>
+</table>
+<p>每个明细表都有相同的列(n/μ/σ/有效时长),还多一列<b>"关联问卷数"</b>(车系/类型维度),反映该维度下有多少份 active 问卷在用这个统计桶。</p>
+
+<div class="callout warn">
+  <span class="lbl">报表数据怎么看健康度</span>
+  健康的统计分布:<b>样本量 n 足够(≥2000)、标准差 σ 适中(不要接近 0)</b>。<br>
+  • 若某问卷 n 很小(<2000)→ 它会回退到上层,报表上看到的阈值不是它自己的,要意识到;<br>
+  • 若 σ卷 ≈ 0 → 说明该维度所有卷时长几乎一样,阈值会退化为均值,容易出现误判(见 FAQ Q5)。
+</div>
+
+<!-- ============ 5. 配置 ============ -->
+<h2 id="s5"><span class="num">5</span>配置参数怎么调(产品/运营)</h2>
+<p>本功能有<b>两个可调参数</b>,在"分位门槛配置"页面。其他参数(替代系数 1/3、样本门槛 2000、单位)写死在代码,需走开发变更。</p>
+
+<h3 id="s5-1"><span class="num">5.1</span>两个门槛</h3>
+<table class="spec">
+  <thead><tr><th>参数</th><th>含义</th><th>默认</th><th>取值范围</th><th>调高/调低的后果</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="k">P题门槛<br><small>(P_TI)</small></td>
+      <td>单题"超时"的分位线。决定多少比例的单题会被判超时并按 μ/3 折算</td>
+      <td><b>95.0%</b></td>
+      <td>50.0% – 99.9%</td>
+      <td><b>调高</b>(如97%):超时题更少,更多单题保留原值 → 整卷时长更接近真实,但中途离开的干扰更难清洗<br><b>调低</b>(如90%):超时题更多,更多单题被压低 → 整卷时长普遍变短,$y_{门槛}$ 也跟着降</td>
+    </tr>
+    <tr>
+      <td class="k">P卷门槛<br><small>(P_JUAN)</small></td>
+      <td>答卷"异常·过快"的分位线。决定多少比例的卷会被标异常</td>
+      <td><b>5.0%</b></td>
+      <td>0.1% – 50.0%</td>
+      <td><b>调高</b>(如10%):异常卷变多(审核压力增大,但漏网少)<br><b>调低</b>(如2%):异常卷变少(审核压力小,但可能漏判)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="s5-2"><span class="num">5.2</span>调参的关键影响(必读)</h3>
+<div class="callout danger">
+  <span class="lbl">调参只对未来生效,不回算历史</span>
+  修改门槛后,<b>只影响"今日凌晨跑批之后"新提交的答卷</b>。<b>已经审核过/已冻结判定的卷,标记不会变。</b><br><br>
+  举例:周一把 P卷门槛从 5% 调到 10%,周一之前已标"正常"的卷不会重新变"异常";只有周二凌晨跑批后的新卷,才按 10% 判。这是设计上的"向后运用",保证审核结论可追溯。
+</div>
+
+<p>所以调参的<b>观察窗口</b>是:调完后等次日跑批,看<b>第二天起新卷</b>的异常率变化,而不是看历史数据。</p>
+
+<h3 id="s5-3"><span class="num">5.3</span>调参原则建议</h3>
+<table class="spec">
+  <thead><tr><th>观察到的现象</th><th>建议调整</th><th>预期效果</th></tr></thead>
+  <tbody>
+    <tr><td>异常卷标得太少,人工抽检发现还有漏网的乱答卷</td><td>P卷门槛 <b>调高</b>(5%→8%或10%)</td><td>异常率上升,更多可疑卷进审核视野</td></tr>
+    <tr><td>异常卷标得太多,审核员忙不过来,且大部分标异常的其实正常</td><td>P卷门槛 <b>调低</b>(5%→3%或2%)</td><td>异常率下降,聚焦最可疑的</td></tr>
+    <tr><td>某些卷因个别超长题(用户离开)被误判正常</td><td>P题门槛 <b>调低</b>(95%→90%)</td><td>更多超长题被折算,整卷时长更干净</td></tr>
+    <tr><td>正常的中等耗时题被误折算,导致整卷时长偏低</td><td>P题门槛 <b>调高</b>(95%→97%)</td><td>只折算极端超长题,保留更多真实时长</td></tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <span class="lbl">调参注意事项</span>
+  <ol>
+    <li><b>一次只调一个参数</b>,观察 3-5 天再决定下一步,避免多变量同时变无法归因。</li>
+    <li><b>默认值(95%/5%)是经过设计的</b>,没有明确数据支持不要随便改。统计学上 95%/5% 是常用的"显著性"分位。</li>
+    <li><b>调参前先看报表</b>:确认当前异常率是否真的偏离预期(太高/太低),而不是凭感觉。</li>
+    <li><b>改完记录原因</b>:配置页会记修改人,建议在工单/文档同步说明"为什么调、调后期望",便于回溯。</li>
+  </ol>
+</div>
+
+<!-- ============ 6. 状态怎么看 ============ -->
+<h2 id="s6"><span class="num">6</span>各种状态字段怎么看</h2>
+<p>本功能涉及的状态字段集中在审核表单,汇总对照:</p>
+<table class="spec">
+  <thead><tr><th>字段</th><th>取值</th><th>含义与你的处理</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="3" class="k">时长异常<br>is_duration_anomaly</td>
+      <td><span class="pill red">1 异常</span></td><td>推定时长 ≤ 有效答卷时长,过快可疑 → 重点核对</td></tr>
+    <tr><td><span class="pill green">0 正常</span></td><td>推定时长 > 有效答卷时长,时长维度无异常 → 可快通道</td></tr>
+    <tr><td><span class="pill gray">空</span></td><td>尚未评估(数据未到位/样本不足) → 无视标记,人工核</td></tr>
+    <tr><td rowspan="7" class="k">参照层级<br>duration_ref_level</td>
+      <td><span class="pill blue">问卷层</span></td><td>用该问卷自己的样本判,最准 → 直接采信</td></tr>
+    <tr><td><span class="pill blue">车系层</span></td><td>用同品牌+车系+类型样本 → 基本采信</td></tr>
+    <tr><td><span class="pill blue">类型层</span></td><td>用同品牌+类型样本 → 参考,结合内容</td></tr>
+    <tr><td><span class="pill yellow">品牌层</span></td><td>用品牌全量样本 → 谨慎,可能因问卷难度差异误判</td></tr>
+    <tr><td><span class="pill gray">种子值</span></td><td>用运营预填的初始值 → 仅参考,优先人工</td></tr>
+    <tr><td><span class="pill gray">样本不足</span></td><td>4 层都不够 2000 样本 → 系统未判,纯人工</td></tr>
+    <tr><td><span class="pill gray">无数据</span></td><td>明细未生成(数据组未推/跑批未到) → 等明天或人工</td></tr>
+    <tr><td class="k">推定答题时长<br>y_duration</td><td>秒数</td><td>已剔除超长题的整卷时长,越小越可疑</td></tr>
+    <tr><td class="k">有效答卷时长<br>y_threshold</td><td>秒数(冻结值)</td><td>判该卷时用的阈值,$y \le$ 此值即异常;随样本每天变,但已冻结不回算</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 7. FAQ ============ -->
+<h2 id="s7"><span class="num">7</span>常见问题 FAQ</h2>
+
+<div class="faq">
+  <div class="q">为什么有的卷没有异常标记(显示"—"或"空")?</div>
+  <div class="a">三种情况:① <b>无数据</b>——数据组还没推送该卷的答题明细,或跑批还没跑到,等次日再看;② <b>样本不足</b>——4 层参照都不够 2000 份样本,系统无法可靠判定,主动放弃判;③ <b>该卷尚未触发评估</b>——还没到提交审核环节。这三种都<b>不代表"正常"</b>,你需要正常人工审核。</div>
+</div>
+
+<div class="faq">
+  <div class="q">标了"异常"的卷,是不是就一定不能发积分?</div>
+  <div class="a"><b>不是。</b>"时长异常"只代表"答得比同类快",是<b>可疑信号而非定性结论</b>。比如一份偏简单的问卷,正常用户也答得快,就会被误标。决策权在你:核对答案内容后,如果答案合理完整,<b>该发还是发</b>。建议把时长异常作为"拒发"的<b>佐证之一</b>,而不是唯一依据。</div>
+</div>
+
+<div class="faq">
+  <div class="q">标了"正常"的卷,是不是就一定没问题?</div>
+  <div class="a"><b>不是。</b>时长正常只代表"答得不快",但用户可以<b>慢慢乱答</b>(故意磨蹭)。本功能只抓"过快",不抓"过慢且乱答"。答案质量仍需结合 NPS/NSS 规则和人工核对。绿标=时长维度无异常,≠答案合规。</div>
+</div>
+
+<div class="faq">
+  <div class="q">为什么同一份卷,昨天看是"异常",今天变成"正常"了?</div>
+  <div class="a"><b>正常情况下不会变。</b>判定结论是<b>冻结</b>的(提交那一刻算定,落库后不回算)。如果变了,可能是:① 该卷重新提交了(产生新的判定);② 数据修复/重跑(罕见,需开发介入)。一般以最新一次冻结为准。若大面积出现回算,反馈给开发排查。</div>
+</div>
+
+<div class="faq">
+  <div class="q">报表上某品牌"答卷标准差 σ卷"接近 0,正常吗?</div>
+  <div class="a"><b>不健康。</b>σ卷≈0 意味着该品牌所有答卷时长几乎一样(可能是冷启动样本太少,或该问卷题目固定耗时)。此时"有效答卷时长"会退化为均值本身,<b>等于均值的卷都会被判异常</b>,容易误伤。遇到这种情况:等样本积累几天再看,或在种子值配置里补一个合理的 σ。</div>
+</div>
+
+<div class="faq">
+  <div class="q">新问卷刚上线,异常标记都不准怎么办?</div>
+  <div class="a">新问卷没有历史样本,系统会<b>逐级回退</b>:先试问卷层(空)→车系层(可能也不够)→类型层→品牌层→种子值。<b>上线前可以让运营在"种子值配置"里预填一个合理的 μ/σ</b>(参考同类型问卷),作为冷启动兜底。等该问卷自己积累够 2000 份样本后,会自动切到问卷层,判定变准。</div>
+</div>
+
+<div class="faq">
+  <div class="q">我调整了 P卷门槛,为什么历史卷的标记没变?</div>
+  <div class="a">这是<b>设计如此</b>(向后运用):调参只对"今日凌晨跑批之后"的新卷生效,已冻结的判定不回算。这样保证审核结论可追溯——你不能因为今天调了阈值,就让昨天已发积分的卷"变成异常"。要看新阈值效果,观察<b>第二天起</b>的新卷异常率。</div>
+</div>
+
+<div class="faq">
+  <div class="q">"推定答题时长"和我直觉的"答题时间"对不上?</div>
+  <div class="a">正常,因为<b>推定时长做了清洗</b>:单题超过 95 分位的部分被按均值 1/3 折算了。所以如果用户某道题离开很久,推定时长会比墙钟时间<b>短</b>不少。这是为了让乱答卷无处遁形(不被中途离开掩护)。你需要的是<b>横向对比</b>(跟同类比),不是纵向对比真实耗时。</div>
+</div>
+
+<div class="faq">
+  <div class="q">多车系问卷的异常判定用的是哪个车系的统计?</div>
+  <div class="a">用问卷配置的<b>第一个车系</b>对应的统计桶。问卷可以配多个车系,但判定时只取第一个(与聚合时多选展开的第一个桶对齐,保证判和聚用同一参照)。所以配置车系时,<b>把最具代表性的车系放第一个</b>。</div>
+</div>
+
+<div class="faq">
+  <div class="q">异常率突然飙升/骤降,是 bug 吗?</div>
+  <div class="a">先排查:① 是否刚调整过门槛参数(见 §5);② 是否有大促/活动导致样本结构变化(新用户多,答题特征不同);③ 某个问卷是否刚上线/下线影响品牌层样本;④ 数据组推送是否异常(明细缺失导致大量 no_data)。排除以上后再找开发。</div>
+</div>
+
+<!-- ============ 8. 速查 ============ -->
+<h2 id="s8"><span class="num">8</span>一句话速查表</h2>
+<table class="spec">
+  <thead><tr><th>看到...</th><th>意思是...</th><th>你该...</th></tr></thead>
+  <tbody>
+    <tr><td><span class="pill red">异常</span> + <span class="pill blue">问卷层</span></td><td>答得太快,且参照很准</td><td>重点怀疑,核对答案</td></tr>
+    <tr><td><span class="pill red">异常</span> + <span class="pill yellow">品牌层</span></td><td>答得太快,但参照较粗</td><td>参考,务必核对答案再定</td></tr>
+    <tr><td><span class="pill green">正常</span></td><td>时长没问题</td><td>快通道,但仍看答案质量</td></tr>
+    <tr><td><span class="pill gray">无数据</span></td><td>明细还没算出来</td><td>等明天,或人工核</td></tr>
+    <tr><td><span class="pill gray">样本不足</span></td><td>统计样本不够,系统没判</td><td>无视标记,纯人工审核</td></tr>
+    <tr><td>调了门槛,历史没变</td><td>设计如此(向后运用)</td><td>看第二天起新卷的效果</td></tr>
+    <tr><td>σ卷≈0</td><td>样本同质化,判定会失真</td><td>等样本积累或补种子值</td></tr>
+  </tbody>
+</table>
+
+<hr style="border:none;border-top:1px solid var(--line);margin:38px 0 18px;">
+<p class="ref">本手册为 WCIP-TCS 项目交付物,面向审核/运营/产品。配套文档:<a href="#">功能与计算逻辑说明书</a>(公式细节)、<a href="#">测试手册</a>(验证用例)。公式与配置疑问查说明书,功能 bug 反馈给开发。</p>
+
+</main>
+</div>
+</body>
+</html>

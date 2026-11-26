@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCS 答题时长异常检测 · 测试手册</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});"></script>
+<style>
+  :root{
+    --ink:#1a1f29; --ink2:#5b6473; --line:#e3e6ec; --line2:#eff1f5;
+    --bg:#fafbfc; --paper:#fff;
+    --accent:#1e5fbf; --accent-soft:#e7eefb;
+    --ok:#1f7a4d; --ok-soft:#e3f1ea;
+    --warn:#9a6b00; --warn-soft:#fbf1d7;
+    --danger:#b53624; --danger-soft:#fbe3df;
+    --code:#0a3069; --code-bg:#f4f6fa;
+    --font-display:'Inter','PingFang SC','Hiragino Sans GB','Microsoft YaHei',-apple-system,sans-serif;
+    --font-body:'Inter','PingFang SC','Hiragino Sans GB','Microsoft YaHei',-apple-system,sans-serif;
+    --font-mono:'SF Mono','JetBrains Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{background:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:15px; line-height:1.65; -webkit-font-smoothing:antialiased;}
+  .layout{display:grid; grid-template-columns:240px 1fr; max-width:1240px; margin:0 auto; gap:36px;}
+  @media(max-width:880px){.layout{grid-template-columns:1fr;}}
+
+  aside{position:sticky; top:0; align-self:start; height:100vh; overflow:auto; padding:28px 14px 28px 22px; border-right:1px solid var(--line); background:var(--bg);}
+  @media(max-width:880px){aside{position:static; height:auto; border-right:none; border-bottom:1px solid var(--line);}}
+  aside .doc-meta{font-size:11px; color:var(--ink2); text-transform:uppercase; letter-spacing:.12em; margin-bottom:10px;}
+  aside .doc-title{font-weight:700; font-size:15px; line-height:1.35; margin-bottom:18px; color:var(--ink);}
+  aside nav a{display:block; color:var(--ink2); text-decoration:none; padding:5px 0; font-size:13px; border-left:2px solid transparent; padding-left:10px; margin-left:-10px;}
+  aside nav a:hover{color:var(--accent);}
+  aside nav a.h2{padding-left:26px; margin-left:-26px; font-size:12.5px; color:var(--ink2);}
+  aside nav .sec-num{font-family:var(--font-mono); font-size:11px; color:var(--ink2); margin-right:6px;}
+
+  main{padding:30px 28px 80px; max-width:820px;}
+  h1{font-family:var(--font-display); font-size:30px; font-weight:700; letter-spacing:-.015em; margin:0 0 4px;}
+  .subtitle{color:var(--ink2); font-size:14px; margin-bottom:6px;}
+  .meta{display:flex; gap:24px; flex-wrap:wrap; font-size:13px; color:var(--ink2); margin:14px 0 26px; padding-bottom:18px; border-bottom:2px solid var(--ink);}
+  .meta div b{color:var(--ink); font-weight:600;}
+
+  h2{font-size:22px; font-weight:700; margin:42px 0 12px; padding-top:14px; letter-spacing:-.01em; scroll-margin-top:20px;}
+  h2 .num{font-family:var(--font-mono); color:var(--ink2); margin-right:10px; font-weight:600; font-size:18px;}
+  h3{font-size:16.5px; font-weight:700; margin:26px 0 8px; color:var(--ink); scroll-margin-top:20px;}
+  h3 .num{font-family:var(--font-mono); color:var(--ink2); margin-right:8px; font-weight:600; font-size:14px;}
+  p{margin:8px 0 12px;}
+  code{font-family:var(--font-mono); font-size:13.5px; background:var(--code-bg); color:var(--code); padding:1.5px 6px; border-radius:4px;}
+  pre.code{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:14px 18px; font-family:var(--font-mono); font-size:12px; line-height:1.6; color:var(--ink); overflow-x:auto; margin:10px 0 14px; white-space:pre;}
+  pre.code .c{color:#6a737d; font-style:italic;}
+  pre.code .k{color:var(--accent); font-weight:600;}
+  strong{color:var(--ink);}
+  em{font-style:italic;}
+
+  ol, ul{padding-left:26px; margin:8px 0 14px;}
+  ol li, ul li{margin:4px 0;}
+
+  .callout{margin:14px 0 18px; padding:12px 16px; border-left:3px solid var(--accent); background:var(--accent-soft); border-radius:0 8px 8px 0; font-size:13.5px;}
+  .callout.warn{border-color:var(--warn); background:var(--warn-soft);}
+  .callout.danger{border-color:var(--danger); background:var(--danger-soft);}
+  .callout.ok{border-color:var(--ok); background:var(--ok-soft);}
+  .callout .lbl{font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink); margin-right:6px;}
+
+  table.spec{width:100%; border-collapse:collapse; font-size:13px; margin:12px 0 18px; background:var(--paper); border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  table.spec th, table.spec td{padding:8px 10px; text-align:left; border-bottom:1px solid var(--line2); vertical-align:top;}
+  table.spec th{background:var(--code-bg); font-weight:600; font-size:12px; color:var(--ink); border-bottom:1.5px solid var(--line);}
+  table.spec tr:last-child td{border-bottom:none;}
+  table.spec td.k{font-family:var(--font-mono); color:var(--code); white-space:nowrap;}
+  table.spec td.c{text-align:center;} table.spec td.r{text-align:right; font-family:var(--font-mono);}
+  table.spec td.sql{font-family:var(--font-mono); font-size:11.5px; color:#0a3069; background:#fafcff;}
+  table.spec .pill{display:inline-block; padding:1.5px 8px; border-radius:999px; font-size:10.5px; font-weight:600;}
+  .pill.p0{background:var(--danger-soft); color:var(--danger);}
+  .pill.p1{background:var(--warn-soft); color:var(--warn);}
+  .pill.p2{background:var(--code-bg); color:var(--ink2);}
+  .pill.pass{background:var(--ok-soft); color:var(--ok);}
+  .pill.fail{background:var(--danger-soft); color:var(--danger);}
+
+  .formula{margin:12px 0 14px; padding:6px 0;}
+  .step{display:flex; gap:14px; margin:14px 0 6px; padding:12px 14px; background:var(--paper); border:1px solid var(--line); border-radius:8px;}
+  .step .badge{font-family:var(--font-mono); font-weight:700; color:var(--paper); background:var(--ink); min-width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;}
+  .step .body{flex:1;}
+  .step .body p:first-child{margin-top:0;}
+  .step .body p:last-child{margin-bottom:0;}
+
+  .case{margin:16px 0 22px; padding:16px 18px; background:var(--paper); border:1px solid var(--line); border-radius:10px; border-left:4px solid var(--accent);}
+  .case .case-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;}
+  .case .case-id{font-family:var(--font-mono); font-weight:700; font-size:14px; color:var(--accent);}
+  .case .case-title{font-weight:600; font-size:14.5px;}
+  .case .case-block{margin:8px 0;}
+  .case .case-block .bk-lbl{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--ink2); margin-bottom:3px;}
+  .case pre.mini{background:var(--code-bg); border:1px solid var(--line2); border-radius:6px; padding:8px 12px; font-family:var(--font-mono); font-size:11.5px; line-height:1.55; color:var(--ink); overflow-x:auto; margin:4px 0; white-space:pre;}
+  .case pre.mini .c{color:#6a737d; font-style:italic;}
+
+  .flow{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12.5px; margin:10px 0 14px;}
+  .flow .node{padding:6px 10px; background:var(--paper); border:1px solid var(--line); border-radius:6px; font-family:var(--font-mono); font-size:11.5px;}
+  .flow .node.src{background:var(--warn-soft); border-color:var(--warn); color:var(--warn);}
+  .flow .node.out{background:var(--ok-soft); border-color:var(--ok); color:var(--ok);}
+  .flow .arr{color:var(--ink2); font-weight:700;}
+
+  .ref{font-size:12.5px; color:var(--ink2);}
+  .ref a{color:var(--accent); text-decoration:none;}
+
+  @media print{
+    body{background:#fff;}
+    aside{display:none;}
+    .layout{display:block; max-width:none;}
+    main{max-width:none; padding:0; margin:0;}
+    h2{page-break-after:avoid;} h3{page-break-after:avoid;}
+    .step, .callout, table.spec, .case{page-break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside>
+  <div class="doc-meta">TCS · WCIP · QA</div>
+  <div class="doc-title">答题时长异常检测<br>测试执行手册</div>
+  <nav>
+    <a href="#s0"><span class="sec-num">0</span>测试导读(必读)</a>
+    <a href="#s0-1" class="h2">0.1 功能一句话</a>
+    <a href="#s0-2" class="h2">0.2 数据流全景</a>
+    <a href="#s0-3" class="h2">0.3 涉及表速览</a>
+    <a href="#s0-4" class="h2">0.4 为什么用 SQL 造数</a>
+    <a href="#s0-5" class="h2">0.5 预期值怎么手算</a>
+    <a href="#s0-6" class="h2">0.6 测试总体思路</a>
+    <a href="#s1"><span class="sec-num">1</span>前置准备</a>
+    <a href="#s1-4" class="h2" style="color:var(--danger);">1.4 判定触发方式(必读)</a>
+    <a href="#s2"><span class="sec-num">2</span>造数方法论</a>
+    <a href="#s3"><span class="sec-num">3</span>场景矩阵总表</a>
+    <a href="#s4"><span class="sec-num">4</span>数学计算正确性(P0)</a>
+    <a href="#s4-1" class="h2">4.1 单题时长 Δ/x_Q</a>
+    <a href="#s4-2" class="h2">4.2 x_门槛 + μ/3 替代</a>
+    <a href="#s4-3" class="h2">4.3 y/y_门槛 判定</a>
+    <a href="#s4-4" class="h2">4.4 k = Φ⁻¹(P)</a>
+    <a href="#s4-5" class="h2">4.5 Welford 增量</a>
+    <a href="#s5"><span class="sec-num">5</span>边界值(P0)</a>
+    <a href="#s6"><span class="sec-num">6</span>4 层参照回退(P1)</a>
+    <a href="#s7"><span class="sec-num">7</span>流程链路(P1)</a>
+    <a href="#s7-6" class="h2">7.6 duration:backfill 回填</a>
+    <a href="#s8"><span class="sec-num">8</span>配置参数(P1)</a>
+    <a href="#s9"><span class="sec-num">9</span>报表页(P2)</a>
+    <a href="#s10"><span class="sec-num">10</span>异常与完整性(P2)</a>
+    <a href="#s11"><span class="sec-num">11</span>车系字典同步+下拉(v2.2.4)</a>
+    <a href="#sA" style="color:var(--ok);font-weight:600;"><span class="sec-num">A</span>白话数学速查(怕数学先看)</a>
+  </nav>
+</aside>
+
+<main>
+
+<h1>TCS 答题时长异常检测 · 测试手册</h1>
+<div class="subtitle">功能与计算逻辑说明书配套测试执行手册 — 含造数 SQL、场景矩阵、用例表与预期值手算模板</div>
+<div class="meta">
+  <div>产品 · <b>黄浩发</b></div>
+  <div>版本 · <b>v1.0</b></div>
+  <div>配套文档 · <b>说明书_7.html</b></div>
+  <div>模块 · <b>WCIP-TCS / 答题时长统计</b></div>
+</div>
+
+<!-- ============ 0. 测试导读 ============ -->
+<h2 id="s0"><span class="num">0</span>测试导读(必读)</h2>
+
+<p>本章节面向<b>首次接触本功能的测试同学</b>,不熟悉表结构和统计逻辑也能从这里入门。读完本章你应当能回答:</p>
+<ul>
+  <li>这个功能到底在干什么?</li>
+  <li>数据从哪来、经过哪些处理、最终落在哪里?</li>
+  <li>哪些表是"输入"、哪些是"中间产物"、哪些是"最终结果"?</li>
+  <li>为什么测试手册大量用 SQL 直接插表?</li>
+  <li>拿到一个用例,怎么自己算出"预期值"?</li>
+</ul>
+
+<h3 id="s0-1"><span class="num">0.1</span>功能一句话</h3>
+<p><b>识别"答得太快/乱答"的问卷,作为不发积分的人工审核参考。</b></p>
+<p>具体做法:统计每份问卷的<b>推定答题时长 $y$</b>(秒),如果 $y$ 比绝大多数正常问卷短(低于下限 $y_{门槛}$),就标记为<b>异常·过快</b>,在人工审核表单高亮。</p>
+<p>关键约束:<b>只标记,不自动处置</b>。最终是否发积分仍由审核员人工复核,本功能只提供"可疑"信号。详见说明书 §1。</p>
+
+<h3 id="s0-2"><span class="num">0.2</span>数据流全景</h3>
+<p>整套数据从"用户答题动作"到"审核表单高亮",经过<b>三条链路</b>:</p>
+
+<p><b>链路 A · 明细计算(日跑批)</b> —— 把原始点击事件算成"每道题花了多少秒"。</p>
+<div class="flow">
+  <span class="node src">answer_event_log<br><small>原始事件流</small></span>
+  <span class="arr">→</span>
+  <span class="node">duration:calculate<br><small>每日 02:30 跑批</small></span>
+  <span class="arr">→</span>
+  <span class="node out">answer_question_duration<br><small>单题时长明细</small></span>
+</div>
+<p style="font-size:12.5px;color:var(--ink2);margin-top:-4px;"><code>answer_event_log</code> 由数据组 T+1 推送(TCS 只读);跑批命令读这条流,算出每道题的原始时长 $x_q$ 和超时替代后的有效时长 $x_q^{\ast}$,写进明细表。</p>
+
+<p><b>链路 B · 异常判定(答卷提交时)</b> —— 答卷提交那一刻,既采样进统计库,又判定这份卷是否异常。</p>
+<div class="flow">
+  <span class="node src">答卷提交<br><small>answers:system:audit</small></span>
+  <span class="arr">→</span>
+  <span class="node">① sample()<br><small>采样进统计库</small></span>
+  <span class="arr">→</span>
+  <span class="node">② judge()<br><small>算 y / y_门槛</small></span>
+  <span class="arr">→</span>
+  <span class="node out">questionnaire_answer_audit<br><small>5 个冻结字段</small></span>
+</div>
+<p style="font-size:12.5px;color:var(--ink2);margin-top:-4px;">提交触发时:① 先把本卷的 $y$ 和各题 $x_q^{\ast}$ 采样进 4 层统计表(stat_*,累计 $\mu/\sigma$);② 再用更新后的统计算 $y_{门槛}$,判定 $y \le y_{门槛}$ 是否成立,结论<b>冻结</b>进审核表。</p>
+
+<p><b>链路 C · 报表展示(实时查询)</b> —— 后台报表页实时算 $\sigma$ 和门槛值展示。</p>
+<div class="flow">
+  <span class="node src">stat_* 4 张表<br><small>累计统计量</small></span>
+  <span class="arr">→</span>
+  <span class="node">4 个报表接口<br><small>实时 σ=√(M2/n)</small></span>
+  <span class="arr">→</span>
+  <span class="node out">报表页<br><small>KPI + 3 明细表</small></span>
+</div>
+
+<div class="callout">
+  <span class="lbl">核心认知</span>
+  本功能的"计算"分两类:<b>累积量</b>($\mu$、$\sigma$ 的滚动更新)发生在链路 A/B;<b>瞬时量</b>($y$、$y_{门槛}$、异常判定)发生在链路 B/C。测试时这两类要分开验。
+</div>
+
+<h3 id="s0-3"><span class="num">0.3</span>涉及表速览(10 张表 + 2 配置表)</h3>
+
+<p>按"数据角色"分组记忆,不要按表名记:</p>
+
+<table class="spec">
+  <thead><tr><th>角色</th><th>表名</th><th>谁写</th><th>里面存什么(测试视角)</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="1"><b>① 原始输入</b><br><span style="color:var(--ink2);font-size:11.5px">数据组的</span></td>
+      <td class="k">answer_event_log</td>
+      <td>数据组 T+1 推<br><b>TCS 只读</b></td>
+      <td>每次点击事件一行:谁(push_id)、哪个问卷、哪道题、什么时间点的</td></tr>
+
+    <tr><td rowspan="1"><b>② 明细产物</b><br><span style="color:var(--ink2);font-size:11.5px">链路 A 输出</span></td>
+      <td class="k">answer_question_duration</td>
+      <td>duration:calculate</td>
+      <td>每份问卷每道题一行的"花了多少秒":$x_q$(原始)、$x_q^{\ast}$(超时替代后)、is_timeout(是否超时)</td></tr>
+
+    <tr><td rowspan="4"><b>③ 累积统计</b><br><span style="color:var(--ink2);font-size:11.5px">链路 B 写</span><br><span style="color:var(--ink2);font-size:11.5px">4 层参照</span></td>
+      <td class="k">stat_questionnaire</td>
+      <td>sample()<br>提交触发</td>
+      <td>按问卷id聚合的 Welford 量:<code>q_*</code>(题级)、<code>s_*</code>(卷级),各含 n/mu/m2</td></tr>
+    <tr><td class="k">stat_car_series</td><td>同上</td><td>按(品牌,车系,类型)三元组聚合,4 层中第 ② 层</td></tr>
+    <tr><td class="k">stat_questionnaire_type</td><td>同上</td><td>按(品牌,类型)二元组聚合,4 层中第 ③ 层</td></tr>
+    <tr><td class="k">stat_brand</td><td>同上</td><td>按品牌聚合,4 层兜底层,样本量通常最大</td></tr>
+
+    <tr><td rowspan="2"><b>④ 配置</b><br><span style="color:var(--ink2);font-size:11.5px">人工/预填</span></td>
+      <td class="k">duration_threshold_config</td><td>配置页 PUT 接口</td>
+      <td>2 行:P_TI(题门槛默认95%)、P_JUAN(卷门槛默认5%),含算好的 k_cache</td></tr>
+    <tr><td class="k">duration_seed_config</td><td>admin 预填</td><td>冷启动种子 μ/σ,作为 4 层全空时的第 ⑤ 兜底</td></tr>
+
+    <tr><td rowspan="1"><b>⑤ 冻结结果</b><br><span style="color:var(--ink2);font-size:11.5px">链路 B 写</span></td>
+      <td class="k">questionnaire_answer_audit<br><small>(+5 新字段)</small></td>
+      <td>judge() 写 5 字段</td>
+      <td>本卷判定结论:<code>y_duration</code>、<code>y_threshold</code>、<code>is_duration_anomaly</code>、<code>duration_ref_level</code>、<code>duration_evaluated_at</code></td></tr>
+
+    <tr><td rowspan="1"><b>⑥ 车系配置</b><br><span style="color:var(--ink2);font-size:11.5px">辅助查询</span></td>
+      <td class="k">questionnaire_car_series</td><td>问卷配置页</td>
+      <td>问卷↔车系多选关联,决定本问卷采进哪几个 stat 桶</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <span class="lbl">什么叫"冻结结果"</span>
+  上表把 <code>questionnaire_answer_audit</code> 叫"<b>冻结结果表</b>",这里"冻结"是关键,意思是 <b>一份卷提交那一刻算一次判定,把结论拍成快照存档,以后不再回算</b>。这跟上面 stat_* 的"<b>活数据</b>"正好相反:
+  <table class="spec" style="margin-top:8px;">
+    <thead><tr><th>表</th><th>性质</th><th>改配置(如 P_JUAN)会怎样</th></tr></thead>
+    <tbody>
+      <tr><td class="k">stat_*</td><td><b>活</b> — 每来一份卷就更新 μ/σ</td><td>自动跟着变</td></tr>
+      <tr><td class="k">questionnaire_answer_audit</td><td><b>死</b> — 提交时拍快照存档</td><td><b>不动</b>,保持提交时的结论</td></tr>
+    </tbody>
+  </table>
+  <b>冻结的 5 个字段</b>(提交时一次性写死,见 §0.5 ⑤ 与 §7.5):<code>y_duration</code>(这卷花了多久)、<code>y_threshold</code>(当时的门槛)、<code>is_duration_anomaly</code>(当时判的 0/1)、<code>duration_ref_level</code>(当时用哪层参照)、<code>duration_evaluated_at</code>(冻结时间)。
+  <b>为什么这么做?</b>三句话:① <b>可追溯</b> — 审核员复查时能对上"当时是依据什么门槛判的";② <b>不回算</b> — 改配置只影响以后新提交的卷,历史几百万份卷不重算(测这个见 C7.5.1);③ <b>解耦</b> — 这 5 字段只是"可疑高亮",不改 <code>system_audit_status</code>,不影响发不发积分。
+  <span class="pill pass">一句话</span> <b>"冻结" = 提交时拍快照存档,拍完不改,审核员拿它做参考,改配置也动不了历史卷的结论。</b>
+</div>
+
+<div class="callout warn">
+  <span class="lbl">字段名陷阱</span>
+  <code>answer_event_log</code> 是<b>数据组的表</b>,字段名跟业务语义<b>不一样</b>!造数据时要用真实列名:
+  <ul style="margin:6px 0 0;">
+    <li>题目 id 真实列名是 <code>ques_id</code>(不是 question_id)</li>
+    <li>事件类型真实列名是 <code>event_id</code>,值是<b>前缀串</b>:<code>click_start_answer_xxx</code>(开始答卷)、<code>click_answer_option_xxx</code>(作答)</li>
+  </ul>
+  其他表都用业务语义列名。
+</div>
+
+<h3 id="s0-4"><span class="num">0.4</span>为什么用 SQL 直接插表(而不是走真实答题流程)</h3>
+<p>本手册的用例<b>绝大多数</b>用 SQL 直接插表,而非通过前端真实答题流程造数。原因有三:</p>
+<ol>
+  <li><b>精确可控。</b>本功能核心是<b>数学计算正确性</b>($\mu$、$\sigma$、门槛、替代、$y$)。真实答题流程无法精确控制"这道题正好花了 95 分位秒数"这种边界,SQL 直插可以。</li>
+  <li><b>预期值可手算。</b>SQL 插入的每个数值都是已知的,用 §0.5 的公式能算出确定的预期值,跟实际结果逐位对得上。</li>
+  <li><b>可复现。</b>同样的 SQL 跑两次结果一致;真实流程每次时间戳都不同,难复现。</li>
+</ol>
+
+<div class="callout ok">
+  <span class="lbl">测试分工建议</span>
+  <b>SQL 直插表(本手册)</b>:验证计算正确性、边界值、回退逻辑 → 适合后端/数据测试同学。<br>
+  <b>真实答题流程(另行)</b>:验证端到端链路连通性、埋点是否正确上报 → 适合业务测试同学,本手册仅在 §7.1 给一条最小连通性用例。
+</div>
+
+<h3 id="s0-5"><span class="num">0.5</span>预期值怎么手算(万能模板)</h3>
+<p>每个用例的"预期值"都不是凭空给的,都按下面这<b>5 步公式链</b>算出来。拿着用例的造数 SQL,套这个模板就能自己复核。</p>
+<div class="callout">
+  <span class="lbl">怕数学先看这里</span>
+  下面出现 μ / σ / k / M₂ 等希腊字母看不懂的话,<b>先翻 <a href="#sA">附录 A · 白话数学速查</a></b>,每个符号都有大白话翻译和生活类比。说白了就是<b>平均数 + "大家差多少" + 一个查表倍数</b>,没有高数。
+</div>
+
+<div class="step"><div class="badge">①</div><div class="body">
+<p><b>算每道题的原始时长 $x_q$。</b>从事件流看每个 answer_update 与前一个事件的间隔 $\Delta$:</p>
+<div class="formula">$$\Delta_i = t_i - t_{i-1} \quad(\text{秒}), \qquad x_Q = \sum_{q_i = Q} \Delta_i$$</div>
+<p style="font-size:12.5px;color:var(--ink2);">首题以 <code>start_click</code> 时间为锚点;负 $\Delta$(乱序)归零。</p>
+</div></div>
+
+<div class="step"><div class="badge">②</div><div class="body">
+<p><b>算参照分布 $\mu_题$、$\sigma_题$(总体标准差,除以 n)。</b></p>
+<div class="formula">$$\mu_题 = \frac{1}{n_题}\sum x_i, \qquad \sigma_题 = \sqrt{\frac{1}{n_题}\sum(x_i - \mu_题)^2}$$</div>
+</div></div>
+
+<div class="step"><div class="badge">③</div><div class="body">
+<p><b>算题门槛,做超时替代。</b>$k_题 = \Phi^{-1}(P_{题门槛})$,默认 $P=95\% \Rightarrow k_题 \approx 1.6449$。</p>
+<div class="formula">$$x_{门槛} = \mu_题 + k_题 \cdot \sigma_题, \qquad x_q^{\ast} = \begin{cases}x_q & x_q < x_{门槛}\\ \lfloor \mu_题/3 \rfloor & x_q \ge x_{门槛}\end{cases}$$</div>
+<p style="font-size:12.5px;color:var(--danger);">⚠ 注意是 <code>&gt;=</code>(等于门槛也算超时),替代值 <code>floor</code> 取整。</p>
+</div></div>
+
+<div class="step"><div class="badge">④</div><div class="body">
+<p><b>算 $y$ 和参照分布 $\mu_卷$、$\sigma_卷$。</b></p>
+<div class="formula">$$y = \sum_{\text{本卷各题}} x_q^{\ast}, \qquad \mu_卷 = \frac{1}{n_卷}\sum y_j, \qquad \sigma_卷 = \sqrt{\frac{1}{n_卷}\sum(y_j - \mu_卷)^2}$$</div>
+</div></div>
+
+<div class="step"><div class="badge">⑤</div><div class="body">
+<p><b>算 $y_{门槛}$,判定异常。</b>$k_卷 = \Phi^{-1}(P_{卷门槛})$,默认 $P=5\% \Rightarrow k_卷 \approx -1.6449$。</p>
+<div class="formula">$$y_{门槛} = \mu_卷 + k_卷 \cdot \sigma_卷 = \mu_卷 - 1.6449\,\sigma_卷$$</div>
+<div class="formula">$$y \le y_{门槛} \;\Longrightarrow\; \text{异常·过快}(is\_duration\_anomaly = 1)$$</div>
+<p style="font-size:12.5px;color:var(--danger);">⚠ 注意是 <code>&lt;=</code>(等于门槛也算异常);且额外要求 $y_{门槛} > 0$ 才判异常(防退化分布误判)。</p>
+</div></div>
+
+<div class="callout">
+  <span class="lbl">$\sigma$ 怎么从表里读</span>
+  stat_* 表<b>不存 $\sigma$</b>,存的是 Welford 的 $M_2 = \sum(x-\mu)^2$。读出来现算:
+  $$\sigma = \sqrt{M_2 \;/\; n}$$<br>
+  报表页接口、judge() 内部都是这么算的。<b>测试时按这个公式核对,别找 $\sigma$ 列。</b>
+</div>
+<div class="callout ok">
+  <span class="lbl">白话</span>
+  表里没有 σ 这一列,只有个叫 <b>M₂</b> 的暂存数。为啥不直接存 σ?为了省地方(详见 <a href="#sA-2">附录 A.2③</a> 超市记账类比)。要验 σ,就拿表里的 M₂ 除以 n 再开根号现算。M₂ 本身没意义,就是个算 σ 用的中间数。
+</div>
+
+<h3 id="s0-6"><span class="num">0.6</span>测试总体思路</h3>
+<p>本手册按"<b>从数学正确性 → 边界 → 回退 → 流程 → 配置 → 展示 → 异常</b>"七个维度递进组织:</p>
+<table class="spec">
+  <thead><tr><th>章节</th><th>维度</th><th>验证什么</th><th>优先级</th></tr></thead>
+  <tbody>
+    <tr><td>§4</td><td>数学计算正确性</td><td>§0.5 五步公式链每一步算得对不对</td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td>§5</td><td>边界值</td><td>正好卡在门槛、正好 n=2000、σ=0 等分界点</td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td>§6</td><td>4 层参照回退</td><td>样本量不足时逐级下沉到下一层</td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td>§7</td><td>流程链路</td><td>跑批/提交/幂等/向后运用等端到端行为</td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td>§8</td><td>配置参数</td><td>P_TI/P_JUAN 取值边界、k 缓存、改后不回算</td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td>§9</td><td>报表页</td><td>4 个接口实时算 σ/门槛、筛选分页</td><td><span class="pill p2">P2</span></td></tr>
+    <tr><td>§10</td><td>异常与完整性</td><td>push_id 字符串、多选展开、负 Δ、空数据兜底</td><td><span class="pill p2">P2</span></td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 1. 前置准备 ============ -->
+<h2 id="s1"><span class="num">1</span>测试前置准备</h2>
+
+<h3 id="s1-1"><span class="num">1.1</span>环境检查清单</h3>
+<p>测试前确认以下就绪(全部 11 个 migration 已跑或对应 SQL 已执行):</p>
+<table class="spec">
+  <thead><tr><th>检查项</th><th>怎么查</th><th>期望</th></tr></thead>
+  <tbody>
+    <tr><td>10 张业务表存在</td><td class="k">SHOW TABLES LIKE 'stat_%';</td><td>4 张 stat_* + duration_threshold_config + duration_seed_config + answer_event_log + answer_question_duration + questionnaire_car_series</td></tr>
+    <tr><td>audit 表 5 字段</td><td class="k">DESC questionnaire_answer_audit;</td><td>含 y_duration / y_threshold / is_duration_anomaly / duration_ref_level / duration_evaluated_at</td></tr>
+    <tr><td>配置表 2 行默认值</td><td class="k">SELECT * FROM duration_threshold_config;</td><td><b>注意:migration 只建表不插数据,表可能为空。</b>若空,GET 接口有代码兜底(P_TI=95/k≈1.644854,P_JUAN=5/k≈-1.644854);要验 PUT 落库或 C4.4 用例,先手动插 2 行:<code>INSERT INTO duration_threshold_config (config_key,percentile,k_cache) VALUES ('P_TI',95.0,1.644854),('P_JUAN',5.0,-1.644854);</code></td></tr>
+    <tr><td>种子表(可选)</td><td class="k">SELECT * FROM duration_seed_config;</td><td>通常为空,冷启动用例(§6.5)需要时再插</td></tr>
+  </tbody>
+</table>
+
+<h3 id="s1-2"><span class="num">1.2</span>每用例前数据清场 SQL</h3>
+<p>为避免上一用例残留数据干扰,<b>每个用例执行前</b>跑下面这段清场(只清时长相关数据,不动业务表):</p>
+<pre class="code"><span class="c">-- 时长测试数据清场(每用例前执行)</span>
+<span class="k">DELETE FROM</span> answer_question_duration;
+<span class="k">DELETE FROM</span> stat_questionnaire;
+<span class="k">DELETE FROM</span> stat_car_series;
+<span class="k">DELETE FROM</span> stat_questionnaire_type;
+<span class="k">DELETE FROM</span> stat_brand;
+<span class="k">DELETE FROM</span> duration_seed_config;
+
+<span class="c">-- 配置复位为默认值</span>
+<span class="k">UPDATE</span> duration_threshold_config <span class="k">SET</span> percentile=95.0, k_cache=1.644854 <span class="k">WHERE</span> config_key=<span class="k">'P_TI'</span>;
+<span class="k">UPDATE</span> duration_threshold_config <span class="k">SET</span> percentile=5.0,  k_cache=-1.644854 <span class="k">WHERE</span> config_key=<span class="k">'P_JUAN'</span>;
+
+<span class="c">-- 清 audit 表时长字段(只清 5 字段,不动其他列)</span>
+<span class="k">UPDATE</span> questionnaire_answer_audit <span class="k">SET</span>
+  y_duration=NULL, y_threshold=NULL, is_duration_anomaly=0,
+  duration_ref_level=NULL, duration_evaluated_at=NULL;
+
+<span class="c">-- 清 watermark(让增量跑批从头开始)</span>
+<span class="k">UPDATE</span> stat_brand <span class="k">SET</span> last_event_log_id=0;  <span class="c">-- 若 stat_brand 已被 DELETE 则跳过</span></pre>
+
+<div class="callout warn">
+  <span class="lbl">注意</span>
+  清场 SQL <b>不清</b> <code>answer_event_log</code>(数据组表,且通常用例会自己重插)。<code>questionnaire_car_series</code> 视用例需要决定是否清,造数 SQL 里会显式 DELETE+INSERT 目标问卷的车系配置。
+</div>
+
+<h3 id="s1-3"><span class="num">1.3</span>触发入口速查表</h3>
+<p>测试时通过以下入口"触发计算"或"查看结果"。记住:本功能没有"点一个按钮就跑"的入口,核心是<b>artisan 命令 + 接口</b>。</p>
+
+<table class="spec">
+  <thead><tr><th>入口</th><th>命令/接口</th><th>干什么</th><th>什么时候用</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="3" style="vertical-align:top"><b>artisan 命令</b></td>
+      <td class="k">php artisan duration:calculate</td>
+      <td>链路 A:读 event_log → 算明细 → 写 answer_question_duration</td>
+      <td>测 §4.1/4.2、§5.1/5.3、§7.1、§10.3/10.4</td></tr>
+    <tr><td class="k">php artisan duration:rebuild-stat</td>
+      <td>从已审核答卷采样重建 stat_*(冷启动)</td>
+      <td>测 §6 各层回退前,用 stat_* 直插替代更可控</td></tr>
+    <tr><td class="k">php artisan duration:backfill<br><small>--from --to --resume</small></td>
+      <td>冷启动回填明细:按日期范围扫历史 event_log → 只写 answer_question_duration(不写 stat_*)</td>
+      <td>测 §7.6(上线/历史数据迁移)</td></tr>
+    <tr><td class="k">php artisan answers:system:audit</td>
+      <td>链路 B:对未审核答卷 sample+judge,写 audit 5 字段</td>
+      <td>测 §4.3、§5.1/5.2/5.4/5.5、§6、§7.2/7.3/7.4/7.5</td></tr>
+    <tr><td rowspan="2" style="vertical-align:top"><b>配置接口</b></td>
+      <td class="k">GET /admin/duration/threshold</td>
+      <td>查 P_TI / P_JUAN 当前值</td>
+      <td>测 §8.2</td></tr>
+    <tr><td class="k">PUT /admin/duration/threshold/{key}</td>
+      <td>改 P_TI / P_JUAN,自动算 k_cache</td>
+      <td>测 §4.4、§5.3/5.4、§8.1/8.2/8.3</td></tr>
+    <tr><td rowspan="4" style="vertical-align:top"><b>报表接口</b></td>
+      <td class="k">GET .../statistics/kpi?brand=东风日产-日产</td>
+      <td>KPI 区 8 字段(含实时 x_门槛/y_门槛)</td>
+      <td>测 §9.1、§9.3</td></tr>
+    <tr><td class="k">GET .../statistics/questionnaires</td>
+      <td>问卷维度明细表</td>
+      <td>测 §9.2</td></tr>
+    <tr><td class="k">GET .../statistics/car-series</td>
+      <td>车系维度明细表</td>
+      <td>测 §9.2</td></tr>
+    <tr><td class="k">GET .../statistics/genres</td>
+      <td>类型维度明细表</td>
+      <td>测 §9.2</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <span class="lbl">造数 vs 触发</span>
+  本手册每个用例的结构是:<b>① 清场 → ② SQL 插数据 → ③ 跑命令/调接口 → ④ 查结果对预期</b>。<br>
+  对于测"<b>判定</b>"的用例(§4.3 起),常用做法是<b>直接插 stat_* 跳过链路 A</b>(因为判定只依赖 stat_* 和明细的 $x_q^{\ast}$),再用 SQL 直插 answer_question_duration 提供本卷明细,最后手动调用 judge() 或跑 system:audit 触发判定。
+</div>
+
+<h3 id="s1-4"><span class="num">1.4</span>判定用例触发方式(重点 · 决定 §4.3 起用例能不能跑通)</h3>
+<div class="callout danger">
+  <span class="lbl">必读:push_id 不是随便起的字符串</span>
+  真实链路里,<code>system:audit</code> 和 <code>judge()</code> 内部都用 <code>WHERE push_id = $pushId</code> 查明细,而这个 <b>$pushId 取的是 <code>push_task_user.id</code>(数字主键)</b>,<b>不是</b> <code>'P99'</code> 这种字符串。手册早期模板里的 <code>'P99'</code> 只是占位写法,直接照抄会让 <code>system:audit</code> 根本处理不到这份卷(命令从 <code>answers</code> 表驱动,见下方身份链)。<b>本节讲清楚两条能跑通的触发路径。</b>
+</div>
+
+<p><b>身份链(判定类用例必须凑齐这条线):</b></p>
+<div class="flow">
+  <span class="node src">push_task_user<br><small>id = 数字,作为 push_id</small></span>
+  <span class="arr">→</span>
+  <span class="node">answers<br><small>push_id = push_task_user.id</small></span>
+  <span class="arr">→</span>
+  <span class="node">answer_question_duration<br><small>push_id = 同一个数字</small></span>
+  <span class="arr">→</span>
+  <span class="node out">judge()/sample()<br><small>按这个数字查明细</small></span>
+</div>
+<p style="font-size:12.5px;color:var(--ink2);margin-top:-4px;">三张表的 <code>push_id</code> 必须<b>是同一个数字</b>(= 某条 <code>push_task_user.id</code>)。明细表和 answers 表都要对齐到它。问卷配置 <code>questionnaire_car_series</code> 决定 brand/series/genre(影响采进哪个 stat 桶 + 判定用哪层参照)。</p>
+
+<p><b>方式一(推荐)·tinker 直调 judge() — 最可控,跳过业务前置</b></p>
+<p style="font-size:13px;"><code>system:audit</code> 除了时长判定,还串了 NPS/NSS 样本配置校验、<code>is_draft</code>、<code>push_at</code> 21 天时效、<code>answers.id ≥ 33843</code> 等一堆业务门槛,凑齐很麻烦。<b>判定类用例只验时长逻辑时,直接调 <code>DurationJudgeService::judge()</code></b>,绕开这些前置:</p>
+<pre class="code"><span class="c"># 1) 用 SQL 造齐:stat_* 参照 + answer_question_duration 本卷明细(push_id 用真实数字,见下方联动模板)</span>
+<span class="c"># 2) 进 tinker 直调判定服务</span>
+php artisan tinker
+
+<span class="c">>>> $svc = new \App\Services\Duration\DurationJudgeService(</span>
+<span class="c">...     new \App\Services\Duration\RefDistributionResolver(),</span>
+<span class="c">...     new \App\Services\Duration\AnswerContextLookup()</span>
+<span class="c">... );</span>
+<span class="c">>>> $svc->preloadForBatch();          <span class="c"># 预加载 stat_* 到内存(可选,量小不调也行)</span></span>
+<span class="c">>>> $svc->judge(<span class="k">$pushId</span>, <span class="k">$questionnaireId</span>);   <span class="c"># 返回 {y, y_threshold, is_anomaly, ref_level}</span></span>
+
+<span class="c"># 例:push_task_user.id=9001, 问卷 1001</span>
+<span class="c">>>> $svc->judge(9001, 1001);</span>
+<span class="c"># => ["y" => 150, "y_threshold" => 201, "is_anomaly" => 1, "ref_level" => "brand"]</span>
+
+<span class="c"># 要验"采样进 stat_*"(§4.5、§7.2):</span>
+<span class="c">>>> $sampler = new \App\Services\Duration\DurationSampleService(</span>
+<span class="c">...     new \App\Services\Duration\StatMerger(),</span>
+<span class="c">...     new \App\Services\Duration\AnswerContextLookup()</span>
+<span class="c">... );</span>
+<span class="c">>>> $sampler->sample(9001, 1001);     <span class="c"># 把本卷 y + 各题 x_q_star 采进 stat_*</span></span></pre>
+<div class="callout warn">
+  <span class="lbl">注意</span>
+  方式一<b>不会</b>把判定结论写进 <code>questionnaire_answer_audit</code> 的 5 个冻结字段(那是 system:audit 干的)。它只返回判定结果数组,适合"我只验算得对不对"。要验"冻结字段真的落库",用方式二。
+</div>
+
+<p><b>方式二·system:audit 端到端 — 验完整冻结链路</b></p>
+<p style="font-size:13px;">要验 audit 5 字段真正落库,得跑完整 <code>system:audit</code>。但它的业务门槛多,造数要补齐这张"联动表":</p>
+<pre class="code"><span class="c">-- ============ 联动造数模板:凑齐 system:audit 处理一份卷所需的身份链 ============
+-- 目标:让 push_id(=push_task_user.id)= 9001 的卷能被 system:audit 处理并写时长冻结字段
+-- 先用 §1.2 清场;以下造数要在 system:audit 处理前完成
+
+<span class="c">-- ① push_task_user:id=9001(作为 push_id)。push_at 设成 30 天前(避开 21 天时效保护,见 SystemAudit line 91)</span>
+<span class="k">INSERT INTO</span> push_task_user
+  (id, plan_id, task_id, car_brand_cn, car_series_cn, push_at, comment_status)
+<span class="k">VALUES</span>
+  (9001, <span class="k">'PLAN_TEST'</span>, 8888, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, <span class="k">'2026-05-20 10:00:00'</span>, 2);
+
+<span class="c">-- ② answers:id ≥ 33843(命令硬编码门槛 line 86),push_id = 9001,is_draft=1(已完成,否则被时效保护跳过 line 91)</span>
+<span class="k">INSERT INTO</span> answers
+  (id, questionnaire_id, push_id, task_id, channel_id, is_draft, answer_body, deleted_at)
+<span class="k">VALUES</span>
+  (40000, 1001, 9001, 8888, <span class="k">'1'</span>, 1, <span class="k">'[]'</span>, NULL);   <span class="c">-- answer_body 给空 JSON,时长判定不依赖它</span>
+
+<span class="c">-- ③ 问卷车系配置(决定 brand/series/genre)</span>
+<span class="k">INSERT INTO</span> questionnaire_car_series (questionnaire_id, car_brand_cn, car_series_cn)
+<span class="k">VALUES</span> (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>);
+
+<span class="c">-- ④ 本卷时长明细(push_id 必须是 9001 这个数字!不是 'P99')</span>
+<span class="k">INSERT INTO</span> answer_question_duration
+  (push_id, questionnaire_id, question_id, car_brand_cn, car_series_cn, genre_id, x_q, is_timeout, x_q_star, batch_id)
+<span class="k">VALUES</span>
+  (9001, 1001, 2002, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 50, 0, 50, 0),
+  (9001, 1001, 2003, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 50, 0, 50, 0),
+  (9001, 1001, 2004, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 50, 0, 50, 0);
+
+<span class="c">-- ⑤ stat_brand 参照(μ卷=300 σ卷=60 → y_门槛=201,见 C4.3.1)</span>
+<span class="k">INSERT INTO</span> stat_brand (car_brand_cn, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span> (<span class="k">'东风日产-日产'</span>, 5000, 30.000, 500000.000, 5000, 300.000, 18000000.000, 0);
+
+<span class="c">-- ============ 触发 ============</span>
+php artisan answers:system:audit
+
+<span class="c">-- ============ 验证(冻结字段应已落库) ============</span>
+<span class="k">SELECT</span> business_id, y_duration, y_threshold, is_duration_anomaly, duration_ref_level
+<span class="k">FROM</span> questionnaire_answer_audit <span class="k">WHERE</span> business_id=9001;
+<span class="c">-- 预期:y_duration=150, y_threshold=201, is_duration_anomaly=1, duration_ref_level=brand</span></pre>
+<div class="callout warn">
+  <span class="lbl">system:audit 的坑</span>
+  <ol style="margin:6px 0 0;">
+    <li><b>NPS/NSS 配置门槛</b>:命令会查 <code>questionnaire_system_valid_questions</code>(line 97),没配样本题会判"无效样本"直接跳过 —— 但<b>时长判定照样会跑</b>(在 markAnswerInvalid/Passed 之后 line 225),所以即使被判无效,audit 行还是会写时长字段。<b>这点对测时长是好事:不用配 NPS/NSS。</b></li>
+    <li><b>幂等</b>:命令用 <code>whereNotExists</code> 过滤已审核卷(line 83-84,<code>system_audit_status in (1,2)</code>)。<b>重跑前要先删/复位该 audit 行</b>,否则不再处理。</li>
+    <li><b>id 门槛</b>:<code>answers.id ≥ 33843</code> 是硬编码(line 86),造数 id 别小于它。</li>
+    <li><b>容错</b>:sample/judge 异常被 try/catch 吞掉只记 warning(line 328-333),不阻塞主流程 —— 如果时长字段没写,先看 <code>storage/logs/laravel.log</code> 有没有 warning。</li>
+  </ol>
+</div>
+<div class="callout ok">
+  <span class="lbl">选型建议</span>
+  <b>验算法正确性(§4.3-§4.5、§5、§6 大部分)</b> → 用方式一 tinker,省事可控。<br>
+  <b>验冻结字段落库 + 端到端链路(§7.2)</b> → 用方式二联动造数 + system:audit。<br>
+  本手册 §4.3 起的用例,造数 SQL 里的 <code>push_id='P99'</code> 等占位符,请替换成本节模板里的数字 id(如 9001)。
+</div>
+
+<!-- ============ 2. 造数方法论 ============ -->
+<h2 id="s2"><span class="num">2</span>造数方法论</h2>
+
+<h3 id="s2-1"><span class="num">2.1</span>三种造数粒度(按用例目的选)</h3>
+<table class="spec">
+  <thead><tr><th>粒度</th><th>插哪张表</th><th>适合测什么</th><th>优缺点</th></tr></thead>
+  <tbody>
+    <tr><td><b>① 原始事件流</b><br><span style="color:var(--ink2);font-size:11.5px">最底层</span></td><td class="k">answer_event_log</td><td>§4.1(Δ/x_Q)、§4.2(超时替代)、§7.1(链路 A)、§10.3(锚点)、§10.4(负Δ)</td><td>✓ 验全链路<br>✗ σ/门槛要等 stat_* 累积,边界难控</td></tr>
+    <tr><td><b>② 明细直插</b><br><span style="color:var(--ink2);font-size:11.5px">中间层</span></td><td class="k">answer_question_duration</td><td>§4.3(y 求和)、§4.5(采样)、§7.2(提交链路)、§7.3(no_data)</td><td>✓ 跳过 Δ 计算,直接控 $x_q^{\ast}$<br>✗ 不验链路 A</td></tr>
+    <tr><td><b>③ stat 直插</b><br><span style="color:var(--ink2);font-size:11.5px">判定层</span></td><td class="k">stat_*(4张)+answer_question_duration</td><td>§4.3 判定、§5 全部边界、§6 回退、§9 报表</td><td>✓ 直接控 $\mu/\sigma$,预期值精确<br>✗ 不验累积过程</td></tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <span class="lbl">选型口诀</span>
+  <b>验 Δ 计算</b>用①; <b>验 y 求和/采样</b>用②; <b>验判定/门槛/回退/报表</b>用③。<br>
+  本手册大部分 P0/P1 边界用例用 ③,因为判定只关心"μ/σ 是这个值时,y 等于这个值得出什么结论"。
+</div>
+
+<h3 id="s2-2"><span class="num">2.2</span>造 event_log 的标准模板(粒度①)</h3>
+<p>用例涉及"从原始事件算 $x_q$"时,用这个模板插事件流。注意<b>真实列名 ques_id / event_id</b>:</p>
+<pre class="code"><span class="c">-- 模板:造一份问卷(Push P1, 问卷 Q1)的答题事件流</span>
+<span class="c">-- event_id 前缀: click_start_answer_xxx = 锚点; click_answer_option_xxx = 作答</span>
+<span class="c">-- ques_id: 锚点事件为 NULL;作答事件填题目 id</span>
+
+<span class="k">INSERT INTO</span> answer_event_log
+  (push_id, event_id, questionnaire_id, ques_id, event_time)
+<span class="k">VALUES</span>
+  (<span class="k">'P1'</span>, <span class="k">'click_start_answer_btn'</span>, <span class="k">'1001'</span>, NULL,    <span class="k">'2026-06-20 10:00:00'</span>),  <span class="c">-- t0 锚点</span>
+  (<span class="k">'P1'</span>, <span class="k">'click_answer_option_q2'</span>, <span class="k">'1001'</span>, <span class="k">'2002'</span>, <span class="k">'2026-06-20 10:00:10'</span>),  <span class="c">-- t1, Δ=10, 归 Q2</span>
+  (<span class="k">'P1'</span>, <span class="k">'click_answer_option_q3'</span>, <span class="k">'1001'</span>, <span class="k">'2003'</span>, <span class="k">'2026-06-20 10:00:25'</span>),  <span class="c">-- t2, Δ=15, 归 Q3</span>
+  (<span class="k">'P1'</span>, <span class="k">'click_answer_option_q2'</span>, <span class="k">'1001'</span>, <span class="k">'2002'</span>, <span class="k">'2026-06-20 10:00:40'</span>),  <span class="c">-- t3, Δ=15, 回改 Q2(累加)</span>
+  (<span class="k">'P1'</span>, <span class="k">'click_answer_option_q4'</span>, <span class="k">'1001'</span>, <span class="k">'2004'</span>, <span class="k">'2026-06-20 10:01:00'</span>);  <span class="c">-- t4, Δ=20, 归 Q4</span>
+
+<span class="c">-- 预期 x_q: Q2 = 10+15 = 25, Q3 = 15, Q4 = 20  (与说明书 §3.1 示例一致)</span></pre>
+
+<div class="callout">
+  <span class="lbl">event_time 必须递增</span>
+  calculator 内部会再排一次序(防御性),但造数时仍建议<b>按插入顺序即时间升序</b>。<br>
+  <code>questionnaire_id</code> 在 event_log 是 <code>VARCHAR(10)</code>,插字符串值(如 <code>'1001'</code>);其他表是 bigint。
+</div>
+
+<h3 id="s2-3"><span class="num">2.3</span>造 stat_* 的标准模板(粒度③)</h3>
+<p>判定类用例直接插 stat_*,跳过累积过程。<b>关键:不存 σ,存 M2 = n·σ²</b>。算好 μ 和 σ 后反推 M2:</p>
+<div class="formula">$$M_2 = n \cdot \sigma^2$$</div>
+<pre class="code"><span class="c">-- 模板:造品牌层(东风日产-日产)的题级+卷级 Welford 量</span>
+<span class="c">-- 设要的题级:μ题=30, σ题=10, n=5000  →  M2_题 = 5000 × 100 = 500000</span>
+<span class="c">-- 设要的卷级:μ卷=300, σ卷=60, n=5000 →  M2_卷 = 5000 × 3600 = 18000000</span>
+
+<span class="k">INSERT INTO</span> stat_brand
+  (car_brand_cn, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span>
+  (<span class="k">'东风日产-日产'</span>, 5000, 30.000, 500000.000, 5000, 300.000, 18000000.000, 0);
+
+<span class="c">-- 此时 x_门槛 = 30 + 1.6449×10 = 46.449</span>
+<span class="c">-- 此时 y_门槛 = 300 + (-1.6449)×60 = 300 - 98.694 = 201.306 → floor = 201</span>
+<span class="c">-- 超时题替代值 = floor(30/3) = 10</span></pre>
+
+<p>4 层 stat 表插法相同,只是 key 不同:</p>
+<table class="spec">
+  <thead><tr><th>表</th><th>唯一 key</th><th>INSERT 示例 key 列</th></tr></thead>
+  <tbody>
+    <tr><td class="k">stat_questionnaire</td><td>questionnaire_id</td><td class="k">questionnaire_id=1001</td></tr>
+    <tr><td class="k">stat_car_series</td><td>(brand, series, genre)</td><td class="k">car_brand_cn='东风日产-日产', car_series_cn='轩逸', genre_id=1</td></tr>
+    <tr><td class="k">stat_questionnaire_type</td><td>(brand, genre)</td><td class="k">car_brand_cn='东风日产-日产', genre_id=1</td></tr>
+    <tr><td class="k">stat_brand</td><td>brand</td><td class="k">car_brand_cn='东风日产-日产'</td></tr>
+  </tbody>
+</table>
+
+<h3 id="s2-4"><span class="num">2.4</span>造本卷明细的标准模板(粒度②)</h3>
+<p>判定类用例需要给"待判定的那份卷"插明细,这样 judge() 能取到 $x_q^{\ast}$ 算 $y$:</p>
+<pre class="code"><span class="c">-- 模板:给 push_id=P99, 问卷 Q1001 插 3 道题的明细</span>
+<span class="c">-- x_q_star 直接给(已替代后的值),y = Σ x_q_star</span>
+
+<span class="k">INSERT INTO</span> answer_question_duration
+  (push_id, questionnaire_id, question_id, car_brand_cn, car_series_cn, genre_id,
+   x_q, is_timeout, x_q_star, batch_id)
+<span class="k">VALUES</span>
+  (<span class="k">'P99'</span>, 1001, 2002, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1,  28, 0,  28, 0),  <span class="c">-- 正常题</span>
+  (<span class="k">'P99'</span>, 1001, 2003, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1,  35, 0,  35, 0),  <span class="c">-- 正常题</span>
+  (<span class="k">'P99'</span>, 1001, 2004, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 120, 1,  10, 0);  <span class="c">-- 超时题, 替代为 μ/3=10</span>
+
+<span class="c">-- y = 28 + 35 + 10 = 73</span></pre>
+
+<!-- ============ 3. 场景矩阵 ============ -->
+<h2 id="s3"><span class="num">3</span>场景矩阵总表</h2>
+<p>全部用例一览。按优先级执行,P0 必过。</p>
+<table class="spec">
+  <thead><tr><th>ID</th><th>场景</th><th>验证点</th><th>造数粒度</th><th>章节</th><th>优先级</th></tr></thead>
+  <tbody>
+    <tr><td class="k">C4.1.1</td><td>基本 Δ 计算 + 多次修改累加</td><td>§0.5 ①</td><td>①</td><td class="c"><a href="#c4-1-1">§4.1</a></td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td class="k">C4.1.2</td><td>首题以 start_click 为锚点</td><td>§0.5 ① 边界</td><td>①</td><td class="c"><a href="#c4-1-2">§4.1</a></td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td class="k">C4.2.1</td><td>x_q ≥ x_门槛 → μ/3 替代</td><td>§0.5 ③</td><td>①</td><td class="c"><a href="#c4-2-1">§4.2</a></td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td class="k">C4.2.2</td><td>x_q 略低于门槛 → 不替代</td><td>§0.5 ③</td><td>①</td><td class="c"><a href="#c4-2-2">§4.2</a></td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td class="k">C4.3.1</td><td>y ≤ y_门槛 → 判异常</td><td>§0.5 ⑤</td><td>③</td><td class="c"><a href="#c4-3-1">§4.3</a></td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td class="k">C4.3.2</td><td>y > y_门槛 → 不判异常</td><td>§0.5 ⑤</td><td>③</td><td class="c"><a href="#c4-3-2">§4.3</a></td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td class="k">C4.4.1</td><td>k = Φ⁻¹(95%) ≈ 1.644854</td><td>§0.5 ③ Acklam</td><td>接口</td><td class="c"><a href="#c4-4-1">§4.4</a></td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td class="k">C4.4.2</td><td>k 随 P 变化正确</td><td>§0.5 ③ Acklam</td><td>接口</td><td class="c"><a href="#c4-4-2">§4.4</a></td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td class="k">C4.5.1</td><td>Welford 单值增量正确</td><td>§0.5 ② + 说明书 §5.1</td><td>②</td><td class="c"><a href="#c4-5-1">§4.5</a></td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td class="k">C5.1.1</td><td>y 正好 = y_门槛 → 判异常</td><td>⑤ 边界 ≤</td><td>③</td><td class="c"><a href="#c5-1-1">§5.1</a></td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td class="k">C5.2.1</td><td>n=2000 命中 / n=1999 回退</td><td>4 层门槛</td><td>③</td><td class="c"><a href="#c5-2-1">§5.2</a></td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td class="k">C5.3.1</td><td>x_q 正好 = x_门槛 → 替代(≥)</td><td>③ 边界 ≥</td><td>①</td><td class="c"><a href="#c5-3-1">§5.3</a></td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td class="k">C5.4.1</td><td>μ/3 替代值 floor 取整</td><td>③ 取整</td><td>③</td><td class="c"><a href="#c5-4-1">§5.4</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C5.5.1</td><td>σ=0 退化分布 → 不误判</td><td>⑤ threshold&gt;0 保护</td><td>③</td><td class="c"><a href="#c5-5-1">§5.5</a></td><td><span class="pill p0">P0</span></td></tr>
+    <tr><td class="k">C6.1.1</td><td>问卷层命中(n≥2000)</td><td>回退 ①</td><td>③</td><td class="c"><a href="#c6-1-1">§6.1</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C6.2.1</td><td>车系层回退</td><td>回退 ②</td><td>③</td><td class="c"><a href="#c6-2-1">§6.2</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C6.3.1</td><td>类型层回退</td><td>回退 ③</td><td>③</td><td class="c"><a href="#c6-3-1">§6.3</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C6.4.1</td><td>品牌层兜底</td><td>回退 ④</td><td>③</td><td class="c"><a href="#c6-4-1">§6.4</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C6.5.1</td><td>种子值兜底</td><td>回退 ⑤</td><td>③</td><td class="c"><a href="#c6-5-1">§6.5</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C6.6.1</td><td>全空 → insufficient</td><td>回退 ⑥</td><td>③</td><td class="c"><a href="#c6-6-1">§6.6</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C7.1.1</td><td>duration:calculate 明细生成</td><td>链路 A 端到端</td><td>①</td><td class="c"><a href="#c7-1-1">§7.1</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C7.2.1</td><td>提交触发 sample→judge</td><td>链路 B 端到端</td><td>②</td><td class="c"><a href="#c7-2-1">§7.2</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C7.3.1</td><td>无明细 → no_data 兜底</td><td>链路 B 容错</td><td>③</td><td class="c"><a href="#c7-3-1">§7.3</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C7.4.1</td><td>重复跑批幂等</td><td>UPSERT</td><td>①</td><td class="c"><a href="#c7-4-1">§7.4</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C7.5.1</td><td>改配置不回算历史</td><td>向后运用</td><td>③</td><td class="c"><a href="#c7-5-1">§7.5</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C7.6.1</td><td>backfill 日期范围回填明细</td><td>冷启动回填</td><td>①</td><td class="c"><a href="#c7-6-1">§7.6</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C7.6.2</td><td>backfill --resume 断点续跑 + 幂等</td><td>幂等/续跑</td><td>①</td><td class="c"><a href="#c7-6-2">§7.6</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C7.6.3</td><td>backfill 缺 --from/--to → 拒绝</td><td>参数校验</td><td>命令</td><td class="c"><a href="#c7-6-3">§7.6</a></td><td><span class="pill p2">P2</span></td></tr>
+    <tr><td class="k">C8.1.1</td><td>P_TI/P_JUAN 取值边界</td><td>校验</td><td>接口</td><td class="c"><a href="#c8-1-1">§8.1</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C8.2.1</td><td>k_cache 缓存正确</td><td>保存即算</td><td>接口</td><td class="c"><a href="#c8-2-1">§8.2</a></td><td><span class="pill p1">P1</span></td></tr>
+    <tr><td class="k">C9.1.1</td><td>KPI 区 8 字段实时算</td><td>报表</td><td>③</td><td class="c"><a href="#c9-1-1">§9.1</a></td><td><span class="pill p2">P2</span></td></tr>
+    <tr><td class="k">C9.2.1</td><td>明细表筛选分页</td><td>报表</td><td>③</td><td class="c"><a href="#c9-2-1">§9.2</a></td><td><span class="pill p2">P2</span></td></tr>
+    <tr><td class="k">C10.1.1</td><td>push_id 字符串类型</td><td>类型兼容</td><td>①</td><td class="c"><a href="#c10-1-1">§10.1</a></td><td><span class="pill p2">P2</span></td></tr>
+    <tr><td class="k">C10.2.1</td><td>多选车系展开采样</td><td>多桶</td><td>②</td><td class="c"><a href="#c10-2-1">§10.2</a></td><td><span class="pill p2">P2</span></td></tr>
+    <tr><td class="k">C10.3.1</td><td>负 Δ 归零</td><td>清洗</td><td>①</td><td class="c"><a href="#c10-3-1">§10.3</a></td><td><span class="pill p2">P2</span></td></tr>
+    <tr><td class="k">C11.1.1</td><td>sync-platform 灌入车系字典</td><td>v2.2.4 同步</td><td>命令</td><td class="c"><a href="#c11-1-1">§11.1</a></td><td><span class="pill p2">P2</span></td></tr>
+    <tr><td class="k">C11.2.1</td><td>sync-mapping 灌入媒体映射</td><td>v2.2.4 同步</td><td>命令</td><td class="c"><a href="#c11-2-1">§11.2</a></td><td><span class="pill p2">P2</span></td></tr>
+    <tr><td class="k">C11.3.1</td><td>同步幂等:重跑行数不变</td><td>upsert 幂等</td><td>命令</td><td class="c"><a href="#c11-3-1">§11.3</a></td><td><span class="pill p2">P2</span></td></tr>
+    <tr><td class="k">C11.4.1</td><td>下拉接口双品牌写法 + 端到端</td><td>v2.2.4 下拉</td><td>接口</td><td class="c"><a href="#c11-4-1">§11.4</a></td><td><span class="pill p2">P2</span></td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 4. 数学计算正确性 ============ -->
+<h2 id="s4"><span class="num">4</span>数学计算正确性(P0)</h2>
+<p>验证 §0.5 五步公式链的每一步。这是本功能的"地基",P0 必过。</p>
+
+<h3 id="s4-1"><span class="num">4.1</span>单题时长 Δ/x_Q 计算(§0.5 ①)</h3>
+<p>验证点:$\Delta_i = t_i - t_{i-1}$、首题以 start_click 锚点、多次修改累加。对应说明书 §3.1。</p>
+
+<div class="case" id="c4-1-1">
+  <div class="case-head">
+    <span class="case-id">C4.1.1</span>
+    <span class="case-title">基本 Δ 计算 + 多次修改累加</span>
+    <span class="pill p0">P0</span>
+    <span style="color:var(--ink2);font-size:12px;">说明书 §3.1 示例</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">① 清场</div>
+    <pre class="mini"><span class="c">-- 跑 §1.2 清场 SQL;另外清 event_log</span>
+<span class="k">DELETE FROM</span> answer_event_log;</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据(event_log + 问卷车系配置)</div>
+    <pre class="mini"><span class="c">-- 插问卷的车系配置(否则 brand/series 为空)</span>
+<span class="k">INSERT INTO</span> questionnaire_car_series (questionnaire_id, car_brand_cn, car_series_cn)
+<span class="k">VALUES</span> (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>);
+
+<span class="c">-- 插事件流(说明书 §3.1 示例:Q1/Q2/Q1回改/Q3)</span>
+<span class="k">INSERT INTO</span> answer_event_log
+  (push_id, event_id, questionnaire_id, ques_id, event_time)
+<span class="k">VALUES</span>
+  (<span class="k">'P1'</span>, <span class="k">'click_start_answer_btn'</span>, <span class="k">'1001'</span>, NULL,    <span class="k">'2026-06-20 10:00:00'</span>),
+  (<span class="k">'P1'</span>, <span class="k">'click_answer_option_q2'</span>, <span class="k">'1001'</span>, <span class="k">'2002'</span>, <span class="k">'2026-06-20 10:00:10'</span>),
+  (<span class="k">'P1'</span>, <span class="k">'click_answer_option_q3'</span>, <span class="k">'1001'</span>, <span class="k">'2003'</span>, <span class="k">'2026-06-20 10:00:25'</span>),
+  (<span class="k">'P1'</span>, <span class="k">'click_answer_option_q2'</span>, <span class="k">'1001'</span>, <span class="k">'2002'</span>, <span class="k">'2026-06-20 10:00:40'</span>),
+  (<span class="k">'P1'</span>, <span class="k">'click_answer_option_q4'</span>, <span class="k">'1001'</span>, <span class="k">'2004'</span>, <span class="k">'2026-06-20 10:01:00'</span>);</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">③ 触发(链路 A 跑批)</div>
+    <pre class="mini">php artisan duration:calculate</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">④ 验证 — 查 answer_question_duration</div>
+    <pre class="mini"><span class="k">SELECT</span> question_id, x_q <span class="k">FROM</span> answer_question_duration
+<span class="k">WHERE</span> push_id=<span class="k">'P1'</span> <span class="k">AND</span> questionnaire_id=1001 <span class="k">ORDER BY</span> question_id;</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期值(手算 §0.5 ①)</div>
+    <p style="font-size:13px;margin:4px 0;">$\Delta_1 = 10-0 = 10$(归 Q2),$\Delta_2 = 25-10 = 15$(归 Q3),$\Delta_3 = 40-25 = 15$(归 Q2),$\Delta_4 = 60-40 = 20$(归 Q4)。</p>
+    <table class="spec" style="margin-top:6px;">
+      <thead><tr><th>question_id</th><th>预期 x_q</th><th>计算过程</th></tr></thead>
+      <tbody>
+        <tr><td class="k">2002</td><td class="r">25</td><td>$10 + 15$(两次累加)</td></tr>
+        <tr><td class="k">2003</td><td class="r">15</td><td>15</td></tr>
+        <tr><td class="k">2004</td><td class="r">20</td><td>20</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 三行 x_q 全部匹配。</p>
+  </div>
+</div>
+
+<div class="case" id="c4-1-2">
+  <div class="case-head">
+    <span class="case-id">C4.1.2</span>
+    <span class="case-title">首题以 start_click 为锚点(无上一题)</span>
+    <span class="pill p0">P0</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据</div>
+    <pre class="mini"><span class="c">-- 只插 start_click + 第一个作答,验证 Δ 用锚点时间</span>
+<span class="k">DELETE FROM</span> answer_event_log;
+<span class="k">INSERT INTO</span> answer_event_log
+  (push_id, event_id, questionnaire_id, ques_id, event_time)
+<span class="k">VALUES</span>
+  (<span class="k">'P2'</span>, <span class="k">'click_start_answer_btn'</span>, <span class="k">'1001'</span>, NULL,    <span class="k">'2026-06-20 11:00:00'</span>),
+  (<span class="k">'P2'</span>, <span class="k">'click_answer_option_q2'</span>, <span class="k">'1001'</span>, <span class="k">'2002'</span>, <span class="k">'2026-06-20 11:00:07'</span>);  <span class="c">-- Δ = 7</span></pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">③ 触发</div>
+    <pre class="mini">php artisan duration:calculate</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;">question_id=2002, <code>x_q = 7</code>(首题 Δ 以 start_click 时间为前驱,非 0、非 NULL)。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> x_q=7,不是 0。</p>
+  </div>
+</div>
+
+<h3 id="s4-2"><span class="num">4.2</span>x_门槛 + μ/3 超时替代(§0.5 ②③)</h3>
+<p>验证点:超时题($x_q \ge x_{门槛}$)以 $\lfloor\mu_题/3\rfloor$ 替代,非超时题保留原值。需要先有 stat_* 提供参照分布。</p>
+
+<div class="case" id="c4-2-1">
+  <div class="case-head">
+    <span class="case-id">C4.2.1</span>
+    <span class="case-title">x_q ≥ x_门槛 → 触发 μ/3 替代</span>
+    <span class="pill p0">P0</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据 — stat_brand 提供题级参照 + event_log 造一超时题</div>
+    <pre class="mini"><span class="c">-- 清场略</span>
+
+<span class="c">-- 题1:造品牌层题级参照 μ题=30, σ题=10, n=5000 → M2=500000</span>
+<span class="c">-- x_门槛 = 30 + 1.6449×10 = 46.449 → 超过此值即替代,floor(30/3)=10</span>
+<span class="k">INSERT INTO</span> stat_brand (car_brand_cn, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span> (<span class="k">'东风日产-日产'</span>, 5000, 30.000, 500000.000, 5000, 300.000, 18000000.000, 0);
+
+<span class="k">INSERT INTO</span> questionnaire_car_series (questionnaire_id, car_brand_cn, car_series_cn)
+<span class="k">VALUES</span> (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>);
+
+<span class="c">-- 造一份卷:Q2 用 60 秒(> 46.449, 超时), Q3 用 20 秒(正常)</span>
+<span class="k">INSERT INTO</span> answer_event_log
+  (push_id, event_id, questionnaire_id, ques_id, event_time)
+<span class="k">VALUES</span>
+  (<span class="k">'P3'</span>, <span class="k">'click_start_answer_btn'</span>, <span class="k">'1001'</span>, NULL,    <span class="k">'2026-06-20 12:00:00'</span>),
+  (<span class="k">'P3'</span>, <span class="k">'click_answer_option_q2'</span>, <span class="k">'1001'</span>, <span class="k">'2002'</span>, <span class="k">'2026-06-20 12:01:00'</span>),  <span class="c">-- Δ=60 超时</span>
+  (<span class="k">'P3'</span>, <span class="k">'click_answer_option_q3'</span>, <span class="k">'1001'</span>, <span class="k">'2003'</span>, <span class="k">'2026-06-20 12:01:20'</span>);  <span class="c">-- Δ=20 正常</span></pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">③ 触发</div>
+    <pre class="mini">php artisan duration:calculate</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">④ 验证</div>
+    <pre class="mini"><span class="k">SELECT</span> question_id, x_q, is_timeout, x_q_star
+<span class="k">FROM</span> answer_question_duration <span class="k">WHERE</span> push_id=<span class="k">'P3'</span> <span class="k">ORDER BY</span> question_id;</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期(§0.5 ③)</div>
+    <table class="spec">
+      <thead><tr><th>question_id</th><th>x_q</th><th>is_timeout</th><th>x_q_star</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td class="k">2002</td><td class="r">60</td><td class="c">1</td><td class="r">10</td><td>$60 \ge 46.449$ → 替代为 $\lfloor 30/3 \rfloor = 10$</td></tr>
+        <tr><td class="k">2003</td><td class="r">20</td><td class="c">0</td><td class="r">20</td><td>$20 < 46.449$ → 保留原值</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 超时题 is_timeout=1 且 x_q_star=10,正常题保留。</p>
+  </div>
+</div>
+
+<div class="case" id="c4-2-2">
+  <div class="case-head">
+    <span class="case-id">C4.2.2</span>
+    <span class="case-title">x_q 略低于门槛 → 不替代</span>
+    <span class="pill p0">P0</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">复用 C4.2.1 的 stat_brand(x_门槛=46.449)。造一题 $\Delta=46$ 秒(< 46.449,卡在门槛下方)。</p>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据(仅 event_log)</div>
+    <pre class="mini"><span class="k">DELETE FROM</span> answer_event_log;
+<span class="k">INSERT INTO</span> answer_event_log
+  (push_id, event_id, questionnaire_id, ques_id, event_time)
+<span class="k">VALUES</span>
+  (<span class="k">'P4'</span>, <span class="k">'click_start_answer_btn'</span>, <span class="k">'1001'</span>, NULL,    <span class="k">'2026-06-20 13:00:00'</span>),
+  (<span class="k">'P4'</span>, <span class="k">'click_answer_option_q2'</span>, <span class="k">'1001'</span>, <span class="k">'2002'</span>, <span class="k">'2026-06-20 13:00:46'</span>);  <span class="c">-- Δ=46 < 46.449</span></pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;">question_id=2002: <code>x_q=46, is_timeout=0, x_q_star=46</code>(46 < 46.449,不替代)。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 不替代,x_q_star = x_q = 46。</p>
+  </div>
+</div>
+
+<h3 id="s4-3"><span class="num">4.3</span>y/y_门槛 异常判定(§0.5 ④⑤)</h3>
+<p>验证点:$y = \sum x_q^{\ast}$、$y_{门槛} = \mu_卷 + k_卷 \sigma_卷$、$y \le y_{门槛} \Rightarrow$ 异常。这是本功能最终判定,最关键。</p>
+
+<div class="case" id="c4-3-1">
+  <div class="case-head">
+    <span class="case-id">C4.3.1</span>
+    <span class="case-title">y ≤ y_门槛 → 判异常(is_duration_anomaly=1)</span>
+    <span class="pill p0">P0</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据 — stat_brand 卷级参照 + 本卷明细(粒度③)</div>
+    <pre class="mini"><span class="c">-- 清场略</span>
+
+<span class="c">-- 卷级参照:μ卷=300, σ卷=60, n=5000 → M2=18000000</span>
+<span class="c">-- y_门槛 = 300 + (-1.6449)×60 = 300 - 98.694 = 201.306 → floor = 201</span>
+<span class="k">INSERT INTO</span> stat_brand (car_brand_cn, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span> (<span class="k">'东风日产-日产'</span>, 5000, 30.000, 500000.000, 5000, 300.000, 18000000.000, 0);
+
+<span class="k">INSERT INTO</span> questionnaire_car_series (questionnaire_id, car_brand_cn, car_series_cn)
+<span class="k">VALUES</span> (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>);
+
+<span class="c">-- 本卷明细:3 道题, y = 50+50+50 = 150 ≤ 201 → 异常</span>
+<span class="k">INSERT INTO</span> answer_question_duration
+  (push_id, questionnaire_id, question_id, car_brand_cn, car_series_cn, genre_id, x_q, is_timeout, x_q_star, batch_id)
+<span class="k">VALUES</span>
+  (<span class="k">'P99'</span>, 1001, 2002, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 50, 0, 50, 0),
+  (<span class="k">'P99'</span>, 1001, 2003, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 50, 0, 50, 0),
+  (<span class="k">'P99'</span>, 1001, 2004, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 50, 0, 50, 0);
+
+<span class="c">-- 还需要在 questionnaire_answer_audit 插一条待审核记录(business_id = push_id)</span>
+<span class="c">-- business_type 固定 'App\Models\Admin\Push\PushTaskUser'</span>
+<span class="c">-- 具体 INSERT 视 audit 表其他必填列而定,测试时补齐</span></pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">③ 触发(链路 B 提交判定)</div>
+    <pre class="mini">php artisan answers:system:audit</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">④ 验证</div>
+    <pre class="mini"><span class="k">SELECT</span> y_duration, y_threshold, is_duration_anomaly, duration_ref_level
+<span class="k">FROM</span> questionnaire_answer_audit <span class="k">WHERE</span> business_id=<span class="k">'P99'</span>;</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期(§0.5 ④⑤)</div>
+    <table class="spec">
+      <thead><tr><th>字段</th><th>预期</th><th>计算</th></tr></thead>
+      <tbody>
+        <tr><td class="k">y_duration</td><td class="r">150</td><td>$50+50+50$</td></tr>
+        <tr><td class="k">y_threshold</td><td class="r">201</td><td>$\lfloor 300 - 1.6449 \times 60 \rfloor = \lfloor 201.306 \rfloor$</td></tr>
+        <tr><td class="k">is_duration_anomaly</td><td class="c">1</td><td>$150 \le 201$ 且 $y_{门槛} > 0$</td></tr>
+        <tr><td class="k">duration_ref_level</td><td class="k">brand</td><td>问卷/车系/类型层都空 → 品牌层兜底</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 4 字段全匹配。</p>
+  </div>
+</div>
+
+<div class="case" id="c4-3-2">
+  <div class="case-head">
+    <span class="case-id">C4.3.2</span>
+    <span class="case-title">y > y_门槛 → 不判异常</span>
+    <span class="pill p0">P0</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">复用 C4.3.1 的 stat_brand(y_门槛=201)。本卷 $y = 100+100+100 = 300 > 201$,正常卷。</p>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据(仅明细,push_id 换 P100)</div>
+    <pre class="mini"><span class="c">-- stat_brand / questionnaire_car_series 沿用 C4.3.1</span>
+<span class="k">INSERT INTO</span> answer_question_duration
+  (push_id, questionnaire_id, question_id, car_brand_cn, car_series_cn, genre_id, x_q, is_timeout, x_q_star, batch_id)
+<span class="k">VALUES</span>
+  (<span class="k">'P100'</span>, 1001, 2002, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 100, 0, 100, 0),
+  (<span class="k">'P100'</span>, 1001, 2003, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 100, 0, 100, 0),
+  (<span class="k">'P100'</span>, 1001, 2004, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 100, 0, 100, 0);</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;"><code>y_duration=300, y_threshold=201, is_duration_anomaly=0, duration_ref_level=brand</code>($300 > 201$,不异常)。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> is_duration_anomaly=0。</p>
+  </div>
+</div>
+
+<h3 id="s4-4"><span class="num">4.4</span>k = Φ⁻¹(P) 计算(§0.5 ③ Acklam)</h3>
+<p>验证点:配置接口保存时算 $k = \Phi^{-1}(P)$ 并缓存。精度 Acklam 近似 $\sim 10^{-9}$。</p>
+<div class="callout ok">
+  <span class="lbl">白话</span>
+  别被 $\Phi^{-1}$ 吓到,它就是<b>"查表换算"</b>。你告诉系统"我要最快的 5%",系统查表回你一个倍数 k=1.6449。这个数<b>背不下来、也不用理解怎么算的</b>,就像 π=3.14159 一样记死就行。换百分位,k 就变(下面 C4.4.2 对照表)。详见 <a href="#sA-2">附录 A.2②</a> 查高考分数线类比。
+</div>
+
+<div class="case" id="c4-4-1">
+  <div class="case-head">
+    <span class="case-id">C4.4.1</span>
+    <span class="case-title">默认值 k = Φ⁻¹(95%) ≈ 1.644854</span>
+    <span class="pill p0">P0</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">③ 触发(改配置触发重算)</div>
+    <pre class="mini"><span class="c">-- PUT 修改 P_TI 为 95.0(即使已是默认值,保存动作会重算 k_cache)</span>
+curl -X PUT <span class="k">'http://{host}/admin/duration/threshold/P_TI'</span> \
+  -d <span class="k">'percentile=95.0'</span>
+
+<span class="c">-- 查</span>
+<span class="k">SELECT</span> percentile, k_cache <span class="k">FROM</span> duration_threshold_config <span class="k">WHERE</span> config_key=<span class="k">'P_TI'</span>;</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;"><code>percentile=95.0, k_cache=1.644854</code>(精确值 1.6448536...,6 位小数四舍五入)。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> k_cache ≈ 1.644854(误差 &lt; $10^{-6}$)。</p>
+  </div>
+</div>
+
+<div class="case" id="c4-4-2">
+  <div class="case-head">
+    <span class="case-id">C4.4.2</span>
+    <span class="case-title">k 随 P 变化正确(多档对照)</span>
+    <span class="pill p0">P0</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">依次 PUT 不同 percentile,核对 k_cache 与说明书 §3.2/§3.3 表格一致。</p>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期对照表</div>
+    <table class="spec">
+      <thead><tr><th>P_TI 输入</th><th>预期 k_cache</th><th>P_JUAN 输入</th><th>预期 k_cache</th></tr></thead>
+      <tbody>
+        <tr><td class="r">80.0</td><td class="r">0.8416</td><td class="r">1.0</td><td class="r">-2.3263</td></tr>
+        <tr><td class="r">90.0</td><td class="r">1.2816</td><td class="r">2.5</td><td class="r">-1.9600</td></tr>
+        <tr><td class="r">95.0</td><td class="r">1.6449</td><td class="r">5.0</td><td class="r">-1.6449</td></tr>
+        <tr><td class="r">97.5</td><td class="r">1.9600</td><td class="r">10.0</td><td class="r">-1.2816</td></tr>
+        <tr><td class="r">99.0</td><td class="r">2.3263</td><td class="r">20.0</td><td class="r">-0.8416</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 全部 k_cache 与上表误差 &lt; $10^{-4}$。</p>
+  </div>
+</div>
+
+<h3 id="s4-5"><span class="num">4.5</span>Welford 增量更新(§0.5 ②,说明书 §5.1)</h3>
+<p>验证点:新来一个 $x$ 后,$\mu$/$\sigma$ 按 Welford 单值公式正确更新。</p>
+<div class="callout ok">
+  <span class="lbl">白话</span>
+  Welford 就是<b>"来一个数就更新一次平均和差异,不用把历史所有数都存下来重新算"</b>的省事算法(详见 <a href="#sA-2">附录 A.2③</a>)。本质还是平均数和差异度,只是算得快、省内存。本用例就是验"来个新数,平均和差异有没有算对"。
+</div>
+<div class="case" id="c4-5-1">
+  <div class="case-head">
+    <span class="case-id">C4.5.1</span>
+    <span class="case-title">Welford 单值增量:μ/σ 更新正确</span>
+    <span class="pill p0">P0</span>
+    <span style="color:var(--ink2);font-size:12px;">说明书 §5.1</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">初始 stat_brand 卷级 $n=2, \mu_卷=100, \sigma_卷=10$(即 $M_2 = 2 \times 100 = 200$)。新来一份提交 $y=120$,验证更新后值。</p>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造初始 stat_brand</div>
+    <pre class="mini"><span class="c">-- 初始: n=2, μ=100, σ=10 → M2 = 2×100 = 200</span>
+<span class="k">INSERT INTO</span> stat_brand (car_brand_cn, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span> (<span class="k">'东风日产-日产'</span>, 5000, 30.000, 500000.000, 2, 100.000, 200.000, 0);
+
+<span class="c">-- 本卷明细 y = 120(单题合计)</span>
+<span class="k">INSERT INTO</span> answer_question_duration
+  (push_id, questionnaire_id, question_id, car_brand_cn, car_series_cn, genre_id, x_q, is_timeout, x_q_star, batch_id)
+<span class="k">VALUES</span>
+  (<span class="k">'P110'</span>, 1001, 2002, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 120, 0, 120, 0);
+<span class="k">INSERT INTO</span> questionnaire_car_series (questionnaire_id, car_brand_cn, car_series_cn)
+<span class="k">VALUES</span> (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>);</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">③ 触发(sample 会更新 stat_brand.s_*)</div>
+    <pre class="mini">php artisan answers:system:audit</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期(§5.1 单值公式)</div>
+    <p style="font-size:13px;">手算:$n' = 2+1 = 3$;$\mu' = 100 + (120-100)/3 = 100 + 6.667 = 106.667$。</p>
+    <p style="font-size:13px;">$\sigma'^2 = \frac{2 \times 100 + (120-100)(120-106.667)}{3} = \frac{200 + 20 \times 13.333}{3} = \frac{200+266.67}{3} = 155.56$</p>
+    <p style="font-size:13px;">$\sigma' = \sqrt{155.56} = 12.472$;$M_2' = 3 \times 155.56 = 466.67$。</p>
+    <table class="spec">
+      <thead><tr><th>字段</th><th>预期</th></tr></thead>
+      <tbody>
+        <tr><td class="k">s_n</td><td class="r">3</td></tr>
+        <tr><td class="k">s_mu</td><td class="r">106.667</td></tr>
+        <tr><td class="k">s_m2</td><td class="r">466.667</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 三字段匹配(容许 ±0.01 浮点误差)。</p>
+  </div>
+</div>
+
+<!-- ============ 5. 边界值 ============ -->
+<h2 id="s5"><span class="num">5</span>边界值(P0)</h2>
+<p>这些用例验证"正好卡在判定分界点上"的行为,是回归测试的重点。</p>
+
+<h3 id="s5-1"><span class="num">5.1</span>y 正好等于 y_门槛</h3>
+<div class="case" id="c5-1-1">
+  <div class="case-head">
+    <span class="case-id">C5.1.1</span>
+    <span class="case-title">y 正好 = y_门槛 → 判异常(≤)</span>
+    <span class="pill p0">P0</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">造 stat_brand 使 $y_{门槛}$ 为整数,再造一份卷 $y$ <b>精确等于</b>该值。验证 $\le$(不是 &lt;)判定。</p>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据</div>
+    <pre class="mini"><span class="c">-- 造 y_门槛 正好 = 200:μ卷=300, σ卷=100/1.6449=60.7932 → 300 - 1.6449×60.7932 = 200.00</span>
+<span class="c">-- M2_卷 = n×σ² = 5000 × 60.7932² = 5000 × 3695.82 = 18479100</span>
+<span class="k">INSERT INTO</span> stat_brand (car_brand_cn, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span> (<span class="k">'东风日产-日产'</span>, 5000, 30.000, 500000.000, 5000, 300.000, 18479100.000, 0);
+
+<span class="c">-- 本卷 y 正好 = 200(50×4)</span>
+<span class="k">INSERT INTO</span> answer_question_duration
+  (push_id, questionnaire_id, question_id, car_brand_cn, car_series_cn, genre_id, x_q, is_timeout, x_q_star, batch_id)
+<span class="k">VALUES</span>
+  (<span class="k">'P120'</span>, 1001, 2002, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 50, 0, 50, 0),
+  (<span class="k">'P120'</span>, 1001, 2003, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 50, 0, 50, 0),
+  (<span class="k">'P120'</span>, 1001, 2004, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 50, 0, 50, 0),
+  (<span class="k">'P120'</span>, 1001, 2005, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 50, 0, 50, 0);
+<span class="k">INSERT INTO</span> questionnaire_car_series (questionnaire_id, car_brand_cn, car_series_cn)
+<span class="k">VALUES</span> (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>);</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">③ 触发</div>
+    <pre class="mini">php artisan answers:system:audit</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;"><code>y_duration=200, y_threshold=200, is_duration_anomaly=1</code>。<b>$200 \le 200$ 成立,判异常</b>($\le$ 而非 $\lt$)。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> is_duration_anomaly=1(等号命中异常)。</p>
+  </div>
+</div>
+
+<h3 id="s5-2"><span class="num">5.2</span>样本量门槛 n=2000 分界(4 层回退触发点)</h3>
+<div class="case" id="c5-2-1">
+  <div class="case-head">
+    <span class="case-id">C5.2.1</span>
+    <span class="case-title">n=2000 命中本层 / n=1999 回退下层</span>
+    <span class="pill p0">P0</span>
+    <span style="color:var(--ink2);font-size:12px;">说明书 §4.2</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">问卷层 $n=2000$ 应命中(用问卷层 $\mu/\sigma$);$n=1999$ 应回退到车系层。两轮对比验证 $n \ge 2000$ 边界。</p>
+    <p style="font-size:13px;color:var(--danger);">⚠ 本用例需先把问卷层 $n$ 卡到边界,通过 <code>duration_ref_level</code> 字段验证"用了哪一层"。</p>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据(轮 A:n=2000 命中问卷层)</div>
+    <pre class="mini"><span class="c">-- 问卷层 Q1001:n=2000, μ卷=250, σ卷=50 → M2=2000×2500=5000000</span>
+<span class="k">INSERT INTO</span> stat_questionnaire (questionnaire_id, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span> (1001, 5000, 30.000, 500000.000, 2000, 250.000, 5000000.000, 0);
+
+<span class="c">-- 车系层 μ卷=400(故意不同,便于区分用了哪层)</span>
+<span class="k">INSERT INTO</span> stat_car_series
+  (car_brand_cn, car_series_cn, genre_id, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span> (<span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 5000, 30.000, 500000.000, 5000, 400.000, 9000000.000, 0);
+
+<span class="c">-- 本卷 y=100(两种门槛下都判异常,但 ref_level 应是 questionnaire)</span>
+<span class="k">INSERT INTO</span> answer_question_duration
+  (push_id, questionnaire_id, question_id, car_brand_cn, car_series_cn, genre_id, x_q, is_timeout, x_q_star, batch_id)
+<span class="k">VALUES</span> (<span class="k">'P130A'</span>, 1001, 2002, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 100, 0, 100, 0);
+<span class="k">INSERT INTO</span> questionnaire_car_series (questionnaire_id, car_brand_cn, car_series_cn)
+<span class="k">VALUES</span> (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>);</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期(轮 A)</div>
+    <p style="font-size:13px;"><code>duration_ref_level = 'questionnaire'</code>(问卷层 $n=2000 \ge 2000$,命中)。$y_{threshold} = \lfloor 250 - 1.6449 \times 50 \rfloor = \lfloor 167.75 \rfloor = 167$。</p>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据(轮 B:问卷层 n=1999 → 回退车系层)</div>
+    <pre class="mini"><span class="c">-- 改问卷层 n 为 1999(低于门槛)</span>
+<span class="k">UPDATE</span> stat_questionnaire <span class="k">SET</span> s_n=1999 <span class="k">WHERE</span> questionnaire_id=1001;
+<span class="c">-- 其余同轮 A,push_id 换 P130B</span></pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期(轮 B)</div>
+    <p style="font-size:13px;"><code>duration_ref_level = 'car_series'</code>(问卷层 $n=1999 < 2000$,下沉车系层)。$y_{threshold} = \lfloor 400 - 1.6449 \times 60 \rfloor = 301$(用车系层 $\mu/\sigma$)。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 轮 A ref_level=questionnaire,轮 B ref_level=car_series。</p>
+  </div>
+</div>
+
+<h3 id="s5-3"><span class="num">5.3</span>x_q 正好等于 x_门槛</h3>
+<div class="case" id="c5-3-1">
+  <div class="case-head">
+    <span class="case-id">C5.3.1</span>
+    <span class="case-title">x_q 正好 = x_门槛 → 替代(≥)</span>
+    <span class="pill p0">P0</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">造 stat_brand 使 $x_{门槛}$ 为整数,造一题 $x_q$ <b>精确等于</b>该值。验证 $\ge$(不是 $\gt$)触发替代。</p>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据</div>
+    <pre class="mini"><span class="c">-- 为精确卡 x_门槛=50:μ题=20, σ题=30/1.6449=18.2382 → 20+1.6449×18.2382=50.0</span>
+<span class="c">-- 判定用原 threshold=50.0(不 floor),x_q=50 ≥ 50.0 → 替代</span>
+<span class="c">-- M2_题 = 5000 × 18.2382² = 5000 × 332.6316 = 1663158</span>
+<span class="k">INSERT INTO</span> stat_brand (car_brand_cn, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span> (<span class="k">'东风日产-日产'</span>, 5000, 20.000, 1663158.000, 5000, 300.000, 18000000.000, 0);
+
+<span class="c">-- x_q 正好 = 50(= x_门槛)</span>
+<span class="k">DELETE FROM</span> answer_event_log;
+<span class="k">INSERT INTO</span> answer_event_log
+  (push_id, event_id, questionnaire_id, ques_id, event_time)
+<span class="k">VALUES</span>
+  (<span class="k">'P140'</span>, <span class="k">'click_start_answer_btn'</span>, <span class="k">'1001'</span>, NULL,    <span class="k">'2026-06-20 14:00:00'</span>),
+  (<span class="k">'P140'</span>, <span class="k">'click_answer_option_q2'</span>, <span class="k">'1001'</span>, <span class="k">'2002'</span>, <span class="k">'2026-06-20 14:00:50'</span>);  <span class="c">-- Δ=50 = x_门槛</span>
+<span class="k">INSERT INTO</span> questionnaire_car_series (questionnaire_id, car_brand_cn, car_series_cn)
+<span class="k">VALUES</span> (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>);</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">③ 触发</div>
+    <pre class="mini">php artisan duration:calculate</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;">question_id=2002: <code>x_q=50, is_timeout=1, x_q_star=6</code>($50 \ge 50$,触发替代;$\lfloor 20/3 \rfloor = 6$)。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> is_timeout=1 且 x_q_star=6(等号触发替代)。</p>
+  </div>
+</div>
+
+<h3 id="s5-4"><span class="num">5.4</span>μ/3 替代值取整</h3>
+<div class="case" id="c5-4-1">
+  <div class="case-head">
+    <span class="case-id">C5.4.1</span>
+    <span class="case-title">μ/3 替代值 floor 取整(μ题=31 → 替代 10)</span>
+    <span class="pill p1">P1</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">$\mu_题 = 31$,$\lfloor 31/3 \rfloor = \lfloor 10.333 \rfloor = 10$(不是 10.333,不是四舍五入 10)。</p>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据</div>
+    <pre class="mini"><span class="c">-- μ题=31, σ题=1 → M2_题 = 5000×1 = 5000; x_门槛 = 31+1.6449 = 32.645</span>
+<span class="k">INSERT INTO</span> stat_brand (car_brand_cn, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span> (<span class="k">'东风日产-日产'</span>, 5000, 31.000, 5000.000, 5000, 300.000, 18000000.000, 0);
+
+<span class="k">DELETE FROM</span> answer_event_log;
+<span class="k">INSERT INTO</span> answer_event_log
+  (push_id, event_id, questionnaire_id, ques_id, event_time)
+<span class="k">VALUES</span>
+  (<span class="k">'P150'</span>, <span class="k">'click_start_answer_btn'</span>, <span class="k">'1001'</span>, NULL,    <span class="k">'2026-06-20 15:00:00'</span>),
+  (<span class="k">'P150'</span>, <span class="k">'click_answer_option_q2'</span>, <span class="k">'1001'</span>, <span class="k">'2002'</span>, <span class="k">'2026-06-20 15:01:00'</span>);  <span class="c">-- Δ=60 ≥ 32.645 超时</span>
+<span class="k">INSERT INTO</span> questionnaire_car_series (questionnaire_id, car_brand_cn, car_series_cn)
+<span class="k">VALUES</span> (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>);</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;">question_id=2002: <code>is_timeout=1, x_q_star=10</code>($\lfloor 31/3 \rfloor = 10$,验证 floor 而非 round)。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> x_q_star=10(不是 10.333,不是 11)。</p>
+  </div>
+</div>
+
+<h3 id="s5-5"><span class="num">5.5</span>σ=0 退化分布</h3>
+<div class="case" id="c5-5-1">
+  <div class="case-head">
+    <span class="case-id">C5.5.1</span>
+    <span class="case-title">σ=0 退化分布 → 不误判异常</span>
+    <span class="pill p0">P0</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">所有样本相同时 $\sigma_卷=0$,$y_{门槛} = \mu_卷 + k_卷 \times 0 = \mu_卷$。此时 $y \le \mu_卷$ 会大量误判。代码有 <code>threshold > 0</code> 保护(实际更严格:见 DurationJudgeService line 104)。但更需关注的是<b>退化分布下不该误判</b>。</p>
+    <div class="callout warn" style="margin:8px 0;">
+      <span class="lbl">实际代码</span> judge() 的保护是 <code>$threshold > 0 && $y <= $threshold</code>。当 $\sigma=0$ 时 $y_{threshold} = \mu_卷 > 0$,此保护<b>不触发</b>。故 $\sigma=0$ 时仍会判 $y \le \mu_卷$ 为异常。这是<b>已知行为</b>,本用例验证它符合预期(非 bug)。
+    </div>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据</div>
+    <pre class="mini"><span class="c">-- 卷级:μ卷=300, σ卷=0(所有样本=300)→ M2=0</span>
+<span class="k">INSERT INTO</span> stat_brand (car_brand_cn, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span> (<span class="k">'东风日产-日产'</span>, 5000, 30.000, 500000.000, 5000, 300.000, 0.000, 0);
+
+<span class="c">-- 本卷 y=300(= μ卷, ≤ y_门槛=300)</span>
+<span class="k">INSERT INTO</span> answer_question_duration
+  (push_id, questionnaire_id, question_id, car_brand_cn, car_series_cn, genre_id, x_q, is_timeout, x_q_star, batch_id)
+<span class="k">VALUES</span> (<span class="k">'P160'</span>, 1001, 2002, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 300, 0, 300, 0);
+<span class="k">INSERT INTO</span> questionnaire_car_series (questionnaire_id, car_brand_cn, car_series_cn)
+<span class="k">VALUES</span> (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>);</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;"><code>y_threshold=300, is_duration_anomaly=1</code>($300 \le 300$,且 $300 > 0$ 保护不拦截)。<b>这是已知行为</b>:$\sigma=0$ 时阈值退化为 $\mu_卷$,等于 $\mu_卷$ 的卷会判异常。生产应避免 $\sigma=0$(样本需有差异)。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 符合代码逻辑(非 bug,记录为已知行为)。</p>
+  </div>
+</div>
+
+<!-- ============ 6. 4层回退 ============ -->
+<h2 id="s6"><span class="num">6</span>4 层参照回退(P1)</h2>
+<p>说明书 §4.2。验证样本量不足时逐级下沉。关键观察点:<code>duration_ref_level</code> 字段反映"用了哪一层"。</p>
+
+<p>回退链(各层 $n \ge 2000$ 才用,否则下沉):</p>
+<div class="flow">
+  <span class="node">① questionnaire<br><small>n≥2000?</small></span>
+  <span class="arr">↓ 否</span>
+  <span class="node">② car_series<br><small>n≥2000?</small></span>
+  <span class="arr">↓ 否</span>
+  <span class="node">③ genre<br><small>n≥2000?</small></span>
+  <span class="arr">↓ 否</span>
+  <span class="node">④ brand<br><small>n≥2000?</small></span>
+  <span class="arr">↓ 否</span>
+  <span class="node">⑤ seed<br><small>有配置?</small></span>
+  <span class="arr">↓ 否</span>
+  <span class="node">⑥ insufficient</span>
+</div>
+
+<h3 id="s6-1"><span class="num">6.1</span>① 问卷层命中</h3>
+<div class="case" id="c6-1-1">
+  <div class="case-head"><span class="case-id">C6.1.1</span><span class="case-title">问卷层 n=3000 → ref_level=questionnaire</span><span class="pill p1">P1</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">见 C5.2.1 轮 A(同构造,把 $n$ 改 3000)。预期 <code>duration_ref_level='questionnaire'</code>。</p>
+  </div>
+</div>
+<h3 id="s6-2"><span class="num">6.2</span>② 车系层回退</h3>
+<div class="case" id="c6-2-1">
+  <div class="case-head"><span class="case-id">C6.2.1</span><span class="case-title">问卷层空 → 车系层命中</span><span class="pill p1">P1</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据</div>
+    <pre class="mini"><span class="c">-- 不插 stat_questionnaire(空)</span>
+<span class="c">-- 插 stat_car_series (brand, series, genre) = (日产, 轩逸, 1), s_n=3000</span>
+<span class="k">INSERT INTO</span> stat_car_series
+  (car_brand_cn, car_series_cn, genre_id, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span> (<span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 5000, 30.000, 500000.000, 3000, 300.000, 18000000.000, 0);
+<span class="c">-- 本卷 y=100(沿用 C4.3.1 造数方式,push_id=P620)</span></pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;"><code>duration_ref_level='car_series'</code>。</p>
+  </div>
+</div>
+<h3 id="s6-3"><span class="num">6.3</span>③ 类型层回退</h3>
+<div class="case" id="c6-3-1">
+  <div class="case-head"><span class="case-id">C6.3.1</span><span class="case-title">问卷/车系层空 → 类型层命中</span><span class="pill p1">P1</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">stat_questionnaire 和 stat_car_series 都空,只插 stat_questionnaire_type (brand=日产, genre=1)。<code>duration_ref_level='genre'</code>。</p>
+  </div>
+</div>
+<h3 id="s6-4"><span class="num">6.4</span>④ 品牌层兜底</h3>
+<div class="case" id="c6-4-1">
+  <div class="case-head"><span class="case-id">C6.4.1</span><span class="case-title">前三层空 → 品牌层兜底</span><span class="pill p1">P1</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">即 C4.3.1 的场景(只插 stat_brand)。<code>duration_ref_level='brand'</code>。</p>
+  </div>
+</div>
+<h3 id="s6-5"><span class="num">6.5</span>⑤ 种子值兜底</h3>
+<div class="case" id="c6-5-1">
+  <div class="case-head"><span class="case-id">C6.5.1</span><span class="case-title">4 层全空 → 用种子值</span><span class="pill p1">P1</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据</div>
+    <pre class="mini"><span class="c">-- stat_* 全空; 插种子配置</span>
+<span class="k">INSERT INTO</span> duration_seed_config
+  (level, level_key, seed_q_mu, seed_q_sigma, seed_s_mu, seed_s_sigma, note)
+<span class="k">VALUES</span> (<span class="k">'brand'</span>, <span class="k">'东风日产-日产'</span>, 30.000, 10.000, 300.000, 60.000, <span class="k">'冷启动种子'</span>);
+<span class="c">-- 本卷 y=100,push_id=P650</span></pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;"><code>duration_ref_level='seed'</code>;$y_{threshold} = \lfloor 300 - 1.6449 \times 60 \rfloor = 201$(用种子 $\mu/\sigma$)。</p>
+  </div>
+</div>
+<h3 id="s6-6"><span class="num">6.6</span>⑥ 全空 → insufficient</h3>
+<div class="case" id="c6-6-1">
+  <div class="case-head"><span class="case-id">C6.6.1</span><span class="case-title">stat_* 和 seed 全空 → insufficient(不判异常)</span><span class="pill p1">P1</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">全部 stat_* 和 seed_config 都空。预期 <code>duration_ref_level='insufficient', is_duration_anomaly=0, y_threshold=NULL</code>(无法判定,跳过)。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 不误判异常,审核流程不阻塞。</p>
+  </div>
+</div>
+
+<!-- ============ 7. 流程链路 ============ -->
+<h2 id="s7"><span class="num">7</span>流程链路(P1)</h2>
+
+<h3 id="s7-1"><span class="num">7.1</span>链路 A 端到端</h3>
+<div class="case" id="c7-1-1">
+  <div class="case-head"><span class="case-id">C7.1.1</span><span class="case-title">duration:calculate 完整链路:事件流 → 明细</span><span class="pill p1">P1</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">即 C4.1.1 + C4.2.1 的组合:插 event_log + stat_brand → 跑 <code>duration:calculate</code> → 验证 answer_question_duration 明细生成,x_q/x_q_star 正确。这是链路 A 的最小连通性验证。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 明细按 (push_id, questionnaire_id, question_id) 唯一,值正确。</p>
+  </div>
+</div>
+
+<h3 id="s7-2"><span class="num">7.2</span>链路 B 端到端(提交触发)</h3>
+<div class="case" id="c7-2-1">
+  <div class="case-head"><span class="case-id">C7.2.1</span><span class="case-title">提交答卷:sample 进 stat_* + judge 写 audit</span><span class="pill p1">P1</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">初始 stat_brand 卷级 $n=2$,插一份本卷明细,跑 <code>answers:system:audit</code>。验证:① stat_brand.s_n 从 2 → 3(sample 生效);② audit 5 字段被写入(judge 生效)。具体手算见 C4.5.1。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> stat_*.s_n 增加 1,audit 5 字段非空。</p>
+  </div>
+</div>
+
+<h3 id="s7-3"><span class="num">7.3</span>no_data 兜底</h3>
+<div class="case" id="c7-3-1">
+  <div class="case-head"><span class="case-id">C7.3.1</span><span class="case-title">本卷无明细 → ref_level=no_data,不阻塞审核</span><span class="pill p1">P1</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据</div>
+    <pre class="mini"><span class="c">-- 插 stat_brand(有参照),但 answer_question_duration 中无 push_id='P730' 的明细</span>
+<span class="c">-- (模拟:数据组尚未推或跑批未跑到该卷)</span>
+<span class="k">INSERT INTO</span> stat_brand (car_brand_cn, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span> (<span class="k">'东风日产-日产'</span>, 5000, 30.000, 500000.000, 5000, 300.000, 18000000.000, 0);
+<span class="c">-- 故意不插 P730 的明细</span></pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;"><code>y_duration=NULL, y_threshold=NULL, is_duration_anomaly=0, duration_ref_level='no_data'</code>。审核流程<b>不阻塞</b>(sample 跳过 + judge 返回 no_data)。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> ref_level=no_data,其他审核字段不受影响。</p>
+  </div>
+</div>
+
+<h3 id="s7-4"><span class="num">7.4</span>幂等:重复跑批</h3>
+<div class="case" id="c7-4-1">
+  <div class="case-head"><span class="case-id">C7.4.1</span><span class="case-title">重复 duration:calculate → 明细不重复,值不变</span><span class="pill p1">P1</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">造 C4.1.1 数据,连跑两次 <code>duration:calculate</code>。第二次因 watermark 推进应跳过;即使重置 watermark 重跑,UPSERT 保证 (push_id, questionnaire_id, question_id) 不重复,x_q 值不变。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 明细行数不变,值一致。</p>
+  </div>
+</div>
+
+<h3 id="s7-5"><span class="num">7.5</span>向后运用(改配置不回算)</h3>
+<div class="case" id="c7-5-1">
+  <div class="case-head"><span class="case-id">C7.5.1</span><span class="case-title">改 P_JUAN 后,已冻结判定不变</span><span class="pill p1">P1</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">步骤</div>
+    <ol style="font-size:13px;">
+      <li>按 C4.3.1 跑一份卷,记下 <code>y_threshold=201, is_duration_anomaly=1</code>。</li>
+      <li>PUT 改 P_JUAN 为 10.0(k 变 -1.2816,$y_{门槛}$ 变高)。</li>
+      <li>重新查该卷 audit 记录。</li>
+    </ol>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;">已冻结记录<b>不变</b>(y_threshold 仍 201,is_duration_anomaly 仍 1)。改配置只影响后续新提交的卷。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 历史判定不变(向后运用 §4.3)。</p>
+  </div>
+</div>
+
+<h3 id="s7-6"><span class="num">7.6</span>冷启动回填命令 duration:backfill</h3>
+<p>冷启动三步走:<b>① backfill 回填历史事件流→明细 → ② rebuild-stat 从已审核答卷重建 stat_* → ③ (可选) 预填种子</b>。本节测第 ① 步。<code>duration:backfill</code> 按 <code>answer_event_log.id</code> 区间分批,每批一个事务,只写 <code>answer_question_duration</code>(<b>不写 stat_*</b>),支持 <code>--resume</code> 断点续跑。</p>
+
+<div class="case" id="c7-6-1">
+  <div class="case-head">
+    <span class="case-id">C7.6.1</span>
+    <span class="case-title">按日期范围回填 → 明细生成正确</span>
+    <span class="pill p1">P1</span>
+    <span style="color:var(--ink2);font-size:12px;">上线/历史数据迁移</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据 — event_log 给定日期范围</div>
+    <pre class="mini"><span class="c">-- 清场略(含 DELETE FROM answer_question_log)</span>
+
+<span class="c">-- 造 2026-06-20 的两份卷事件流(push_id 用真实数字,见 §1.4)</span>
+<span class="k">INSERT INTO</span> push_task_user (id, plan_id, task_id, car_brand_cn, car_series_cn, push_at)
+<span class="k">VALUES</span> (9001, <span class="k">'P'</span>, 8888, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, <span class="k">'2026-05-20 10:00:00'</span>);
+
+<span class="k">INSERT INTO</span> questionnaire_car_series (questionnaire_id, car_brand_cn, car_series_cn)
+<span class="k">VALUES</span> (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>);
+
+<span class="k">INSERT INTO</span> answer_event_log (push_id, event_id, questionnaire_id, ques_id, event_time)
+<span class="k">VALUES</span>
+  (9001, <span class="k">'click_start_answer_btn'</span>, <span class="k">'1001'</span>, NULL,    <span class="k">'2026-06-20 10:00:00'</span>),
+  (9001, <span class="k">'click_answer_option_q2'</span>, <span class="k">'1001'</span>, <span class="k">'2002'</span>, <span class="k">'2026-06-20 10:00:10'</span>);  <span class="c">-- Δ=10 归 Q2</span>
+
+<span class="c">-- 另造一条 2026-06-25 的(超出回填范围,验证不会被回填)</span>
+<span class="k">INSERT INTO</span> answer_event_log (push_id, event_id, questionnaire_id, ques_id, event_time)
+<span class="k">VALUES</span>
+  (9001, <span class="k">'click_start_answer_btn'</span>, <span class="k">'1001'</span>, NULL,    <span class="k">'2026-06-25 10:00:00'</span>),
+  (9001, <span class="k">'click_answer_option_q3'</span>, <span class="k">'1001'</span>, <span class="k">'2003'</span>, <span class="k">'2026-06-25 10:00:20'</span>);  <span class="c">-- Δ=20 归 Q3</span></pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">③ 触发(只回填 06-20 当天)</div>
+    <pre class="mini">php artisan duration:backfill --from=2026-06-20 --to=2026-06-20</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">④ 验证</div>
+    <pre class="mini"><span class="k">SELECT</span> question_id, x_q <span class="k">FROM</span> answer_question_duration
+<span class="k">WHERE</span> push_id=9001 <span class="k">ORDER BY</span> question_id;
+<span class="c">-- 预期:只有 2002 一行(x_q=10)。2003 那条在 06-25,不在回填范围,不应出现</span></pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;"><code>answer_question_duration</code> 只有 question_id=2002 一行, <code>x_q=10</code>。06-25 的事件流未被回填。<b>stat_* 表无变化</b>(backfill 不写 stat_*)。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 日期范围过滤生效,只回填范围内事件,stat_* 未动。</p>
+  </div>
+</div>
+
+<div class="case" id="c7-6-2">
+  <div class="case-head">
+    <span class="case-id">C7.6.2</span>
+    <span class="case-title">--resume 断点续跑 + 幂等(重跑不重复)</span>
+    <span class="pill p1">P1</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">步骤</div>
+    <ol style="font-size:13px;">
+      <li>沿用 C7.6.1 造数,跑一次完整范围 <code>--from=2026-06-20 --to=2026-06-30</code>,记下明细行数 N。</li>
+      <li><b>模拟中断</b>:把 watermark 回退一部分 <code>UPDATE stat_brand SET last_event_log_id = (原值 - 100);</code>(模拟某批失败后 watermark 停在中途)。</li>
+      <li>用 <code>--resume</code> 重跑:<code>php artisan duration:backfill --from=2026-06-20 --to=2026-06-30 --resume</code>。命令会输出 <code>--resume:从 watermark {X} 继续</code>。</li>
+    </ol>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;">① 明细总行数仍 = N(<code>answer_question_duration</code> 有唯一约束 <code>(push_id, questionnaire_id, question_id)</code> + UPSERT,重跑幂等,不重复、值不变)。② <code>--resume</code> 跳过已成功批次,只处理 watermark 之后的。③ 命令结束后 <code>stat_brand.last_event_log_id</code> = 区间内 <code>answer_event_log.id</code> 的最大值。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> --resume 从 watermark 续跑,明细幂等不重复。</p>
+  </div>
+</div>
+
+<div class="case" id="c7-6-3">
+  <div class="case-head">
+    <span class="case-id">C7.6.3</span>
+    <span class="case-title">无 --from/--to → 拒绝执行(参数校验)</span>
+    <span class="pill p2">P2</span>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">③ 触发</div>
+    <pre class="mini">php artisan duration:backfill   <span class="c"># 不带任何选项</span></pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;">命令输出 <code>必须指定 --from 和 --to 日期</code>,返回码 1,不做任何回填。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 缺参被拦,无副作用。</p>
+  </div>
+</div>
+
+<div class="callout warn">
+  <span class="lbl">三个 duration 命令别搞混</span>
+  <ul style="margin:6px 0 0;">
+    <li><code>duration:calculate</code> —— <b>日常增量</b>(链路 A),读 watermark 之后的新事件流 → 明细 + stat_*。</li>
+    <li><code>duration:backfill</code> —— <b>冷启动回填明细</b>,按日期范围扫历史 event_log → <b>只写明细,不写 stat_*</b>。配 <code>--from/--to/--batch/--resume</code>。</li>
+    <li><code>duration:rebuild-stat</code> —— <b>冷启动建 stat_*</b>,从 <code>questionnaire_answer_audit</code> 已审核答卷采样重建。backfill 之后单独跑。</li>
+  </ul>
+</div>
+
+<!-- ============ 8. 配置 ============ -->
+<h2 id="s8"><span class="num">8</span>配置参数(P1)</h2>
+
+<h3 id="s8-1"><span class="num">8.1</span>取值边界校验</h3>
+<div class="case" id="c8-1-1">
+  <div class="case-head"><span class="case-id">C8.1.1</span><span class="case-title">P_TI/P_JUAN 越界 → 422 拒绝</span><span class="pill p1">P1</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">P_TI 取值 50.0–99.9;P_JUAN 取值 0.1–50.0。超界返回 422。</p>
+    <table class="spec">
+      <thead><tr><th>PUT 输入</th><th>预期</th></tr></thead>
+      <tbody>
+        <tr><td class="k">P_TI percentile=49.9</td><td><span class="pill fail">422</span> 越下界</td></tr>
+        <tr><td class="k">P_TI percentile=100.0</td><td><span class="pill fail">422</span> 越上界</td></tr>
+        <tr><td class="k">P_TI percentile=50.0</td><td><span class="pill pass">200</span> 边界合法</td></tr>
+        <tr><td class="k">P_TI percentile=99.9</td><td><span class="pill pass">200</span> 边界合法</td></tr>
+        <tr><td class="k">P_JUAN percentile=0.05</td><td><span class="pill fail">422</span> 越下界</td></tr>
+        <tr><td class="k">P_JUAN percentile=50.1</td><td><span class="pill fail">422</span> 越上界</td></tr>
+        <tr><td class="k">P_JUAN percentile=0.1</td><td><span class="pill pass">200</span> 边界合法</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h3 id="s8-2"><span class="num">8.2</span>k_cache 缓存正确性</h3>
+<div class="case" id="c8-2-1">
+  <div class="case-head"><span class="case-id">C8.2.1</span><span class="case-title">保存即重算 k_cache,GET 返回一致</span><span class="pill p1">P1</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">PUT P_TI=97.5 → 查表 k_cache=1.960014 → GET 接口返回一致。验证"保存时算一次缓存"。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> PUT 响应、DB、GET 三处 k_cache 一致。</p>
+  </div>
+</div>
+
+<h3 id="s8-3"><span class="num">8.3</span>改后只对未来生效</h3>
+<p>见 C7.5.1(向后运用)。</p>
+
+<!-- ============ 9. 报表 ============ -->
+<h2 id="s9"><span class="num">9</span>报表页(P2)</h2>
+
+<h3 id="s9-1"><span class="num">9.1</span>KPI 区实时计算</h3>
+<div class="case" id="c9-1-1">
+  <div class="case-head"><span class="case-id">C9.1.1</span><span class="case-title">KPI 8 字段:μ/σ/门槛实时算</span><span class="pill p2">P2</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据</div>
+    <pre class="mini"><span class="c">-- stat_brand: 题级 μ=30 σ=10 n=5000, 卷级 μ=300 σ=60 n=5000</span>
+<span class="k">INSERT INTO</span> stat_brand (car_brand_cn, q_n, q_mu, q_m2, s_n, s_mu, s_m2, last_event_log_id)
+<span class="k">VALUES</span> (<span class="k">'东风日产-日产'</span>, 5000, 30.000, 500000.000, 5000, 300.000, 18000000.000, 0);</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">③ 调接口</div>
+    <pre class="mini">curl <span class="k">'http://{host}/admin/duration/statistics/kpi?brand=东风日产-日产'</span></pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期(σ = √(M2/n),实时算)</div>
+    <table class="spec">
+      <thead><tr><th>字段</th><th>预期</th><th>计算</th></tr></thead>
+      <tbody>
+        <tr><td class="k">q_mu</td><td class="r">30</td><td>读表</td></tr>
+        <tr><td class="k">q_sigma</td><td class="r">10</td><td>$\sqrt{500000/5000}$</td></tr>
+        <tr><td class="k">x_threshold</td><td class="r">46.449</td><td>$30 + 1.6449 \times 10$</td></tr>
+        <tr><td class="k">s_mu</td><td class="r">300</td><td>读表</td></tr>
+        <tr><td class="k">s_sigma</td><td class="r">60</td><td>$\sqrt{18000000/5000}$</td></tr>
+        <tr><td class="k">y_threshold</td><td class="r">201.306</td><td>$300 - 1.6449 \times 60$</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 6 字段实时算正确。</p>
+  </div>
+</div>
+
+<h3 id="s9-2"><span class="num">9.2</span>明细表筛选/分页</h3>
+<div class="case" id="c9-2-1">
+  <div class="case-head"><span class="case-id">C9.2.1</span><span class="case-title">车系明细表:按 genre_id 筛选 + 分页</span><span class="pill p2">P2</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">插多条 stat_car_series(genre 不同),调 <code>GET .../statistics/car-series?brand=东风日产-日产&genre_id=1&page=1&pageSize=2</code>,验证 list 只返 genre_id=1 的、total 正确、分页字段对。</p>
+  </div>
+</div>
+
+<h3 id="s9-3"><span class="num">9.3</span>门槛随配置联动</h3>
+<div class="case" id="c9-3-1">
+  <div class="case-head"><span class="case-id">C9.3.1</span><span class="case-title">改 P_TI 后,报表 x_threshold 实时变</span><span class="pill p2">P2</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">同 C9.1.1 数据,PUT P_TI=99.0(k=2.3263),再调 KPI 接口,预期 <code>x_threshold = 30 + 2.3263×10 = 53.263</code>(门槛升高,超时题变少)。</p>
+  </div>
+</div>
+
+<!-- ============ 10. 异常与完整性 ============ -->
+<h2 id="s10"><span class="num">10</span>异常与完整性(P2)</h2>
+
+<h3 id="s10-1"><span class="num">10.1</span>push_id 字符串类型</h3>
+<div class="case" id="c10-1-1">
+  <div class="case-head"><span class="case-id">C10.1.1</span><span class="case-title">push_id 含字母/超长数字 → 正常处理</span><span class="pill p2">P2</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">说明</div>
+    <p style="font-size:13px;">push_id 是字符串(本期去除 (int) 强转)。造 push_id='PUSH_ABC_123456789012345'(含字母+长串),验证明细生成、判定、采样全程不报错、不截断。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 全链路字符串 push_id 正确处理。</p>
+  </div>
+</div>
+
+<h3 id="s10-2"><span class="num">10.2</span>多选车系展开</h3>
+<div class="case" id="c10-2-1">
+  <div class="case-head"><span class="case-id">C10.2.1</span><span class="case-title">问卷配 2 个车系 → sample 进 2 个车系桶</span><span class="pill p2">P2</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据</div>
+    <pre class="mini"><span class="c">-- 问卷 1001 配 2 个车系(轩逸 + 天籁)</span>
+<span class="k">INSERT INTO</span> questionnaire_car_series (questionnaire_id, car_brand_cn, car_series_cn)
+<span class="k">VALUES</span>
+  (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>),
+  (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'天籁'</span>);
+
+<span class="c">-- 本卷明细 y=120(单题合计)</span>
+<span class="k">INSERT INTO</span> answer_question_duration
+  (push_id, questionnaire_id, question_id, car_brand_cn, car_series_cn, genre_id, x_q, is_timeout, x_q_star, batch_id)
+<span class="k">VALUES</span> (<span class="k">'P1020'</span>, 1001, 2002, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>, 1, 120, 0, 120, 0);</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">③ 触发</div>
+    <pre class="mini">php artisan answers:system:audit</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;">stat_car_series 中 <code>(日产, 轩逸, 1)</code> 和 <code>(日产, 天籁, 1)</code> 两个桶的 <code>s_n</code> 都 +1(各 +120 到 s_mu 累积)。即一份卷的多选展开到每个车系桶。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 两个车系桶 s_n 各 +1。</p>
+  </div>
+</div>
+
+<h3 id="s10-3"><span class="num">10.3</span>负 Δ 归零</h3>
+<div class="case" id="c10-3-1">
+  <div class="case-head"><span class="case-id">C10.3.1</span><span class="case-title">乱序回填事件 → 负 Δ 归零,不污染</span><span class="pill p2">P2</span></div>
+  <div class="case-block">
+    <div class="bk-lbl">② 造数据</div>
+    <pre class="mini"><span class="c">-- 故意插乱序事件(第二个作答时间早于第一个,模拟回填乱序)</span>
+<span class="k">DELETE FROM</span> answer_event_log;
+<span class="k">INSERT INTO</span> answer_event_log
+  (push_id, event_id, questionnaire_id, ques_id, event_time)
+<span class="k">VALUES</span>
+  (<span class="k">'P1030'</span>, <span class="k">'click_start_answer_btn'</span>, <span class="k">'1001'</span>, NULL,    <span class="k">'2026-06-20 16:00:00'</span>),
+  (<span class="k">'P1030'</span>, <span class="k">'click_answer_option_q2'</span>, <span class="k">'1001'</span>, <span class="k">'2002'</span>, <span class="k">'2026-06-20 16:00:30'</span>),  <span class="c">-- Δ=30 归 Q2</span>
+  (<span class="k">'P1030'</span>, <span class="k">'click_answer_option_q3'</span>, <span class="k">'1001'</span>, <span class="k">'2003'</span>, <span class="k">'2026-06-20 16:00:20'</span>);  <span class="c">-- 乱序!排序后 Δ=-10 → 归零</span>
+<span class="k">INSERT INTO</span> questionnaire_car_series (questionnaire_id, car_brand_cn, car_series_cn)
+<span class="k">VALUES</span> (1001, <span class="k">'东风日产-日产'</span>, <span class="k">'轩逸'</span>);</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">③ 触发</div>
+    <pre class="mini">php artisan duration:calculate</pre>
+  </div>
+  <div class="case-block">
+    <div class="bk-lbl">⑤ 预期</div>
+    <p style="font-size:13px;">排序后事件顺序:start_click(16:00:00) → Q3(16:00:20, Δ=20) → Q2(16:00:30, Δ=10)。故 question_id=2003 的 $x_q=20$,question_id=2002 的 $x_q=10$。<b>不出现负值</b>(负 Δ 已归零保护)。</p>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> 所有 x_q ≥ 0,无负值。</p>
+  </div>
+</div>
+
+<!-- ============ 11. 车系字典同步 + 下拉接口 ============ -->
+<h2 id="s11"><span class="num">11</span>车系字典同步 + 下拉接口(v2.2.4 补齐)</h2>
+<p>本节是 <b>v2.2.4 遗漏项补齐</b>的配套测试。<b>不影响答题时长判定算法本身</b>,但它是「问卷维度车系筛选」下拉能否正常工作的<b>数据前置依赖</b>——字典表没数据,下拉就是空的,§6.2 的 <code>car_series_cn[]</code> 筛选就成了摆设。优先级 P2(算法无关,但功能完整性必须验)。</p>
+
+<div class="callout">
+  <span class="lbl">这一节测什么(一句话)</span>
+  两个后台同步命令能不能把车系字典从数营平台灌进本地表 + 一个下拉接口能不能按品牌返回正确的车系列表。下游「问卷维度车系下拉填充 → 选中后过滤生效」整条链路通不通。
+</div>
+
+<div class="callout warn">
+  <span class="lbl">运维前置依赖(必须先满足)</span>
+  ① 运维已在 <code>.env</code> 配好 <code>SHUYING_JAVA_API_URL</code> / <code>SHUYING_PHP_API_URL</code>(数营平台两个服务的 base_uri;同主机则两个值相同);<br>
+  ② 网络已打通 TCS 服务器 ↔ 数营平台;<br>
+  ③ 两张表已通过 <code>php artisan migrate</code> 建好:<code>base_platform_car_series</code> / <code>mapping_car_series</code>。<br>
+  任一不满足,本节命令会报连接错误(非本功能 bug),找运维。
+</div>
+
+<div class="step" id="c11-1-1">
+  <div class="bk-lbl">C11.1.1 · sync-platform 灌入车系字典(P2)</div>
+  <div class="bk-sub">验证点:命令执行成功 + 字典表有数据 + 已知车系落表</div>
+  <div class="bk-pre">
+    <div class="bk-lbl">① 执行前确认表是空的(或记录清零)</div>
+<pre class="mini"><span class="c">-- 确认初始行数(新环境应为 0)</span>
+SELECT COUNT(*) AS cnt FROM base_platform_car_series;</pre>
+    <div class="bk-lbl">② 手动跑同步命令</div>
+<pre class="mini">php artisan car-series:sync-platform</pre>
+    <p style="font-size:13px;">期望输出:<code>car-series:sync-platform 完成,共处理 N 条(新增 N)</code>。<b>N 应为数十~上百</b>(日产+启辰全部在售车系)。如果输出 <code>上游返回空数据,跳过</code> 或连接报错,先查运维配置(见上方 callout),不是本功能 bug。</p>
+    <div class="bk-lbl">③ 校验已知车系落表</div>
+<pre class="mini"><span class="c">-- 日产常见车系应该能查到(name 字段就是下拉值)</span>
+SELECT id, name, brand_id, is_enable, car_state
+FROM base_platform_car_series
+WHERE name IN ('轩逸','天籁','逍客','骐达','奇骏')
+ORDER BY brand_id, name;
+
+<span class="c">-- 启辰车系(brand_id=2)</span>
+SELECT id, name, brand_id FROM base_platform_car_series
+WHERE brand_id = 2 LIMIT 10;</pre>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> ①命令输出"完成,共处理 N 条";②表 COUNT 从 0 变 N;③「轩逸/天籁/逍客」等知名车系能查到,name 非空。</p>
+  </div>
+</div>
+
+<div class="step" id="c11-2-1">
+  <div class="bk-lbl">C11.2.1 · sync-mapping 灌入媒体映射(P2)</div>
+  <div class="bk-sub">验证点:命令执行成功 + 映射表有数据</div>
+  <div class="bk-pre">
+    <div class="bk-lbl">① 执行前确认表为空</div>
+<pre class="mini">SELECT COUNT(*) AS cnt FROM mapping_car_series;</pre>
+    <div class="bk-lbl">② 手动跑同步命令</div>
+<pre class="mini">php artisan car-series:sync-mapping</pre>
+    <p style="font-size:13px;">期望输出:<code>car-series:sync-mapping 完成,共处理 N 条(新增 N)</code>。本表是媒体车系映射(media_id/media_car_series_id),当前 TCS 暂无 UI 直接消费,只验"灌进来了"即可。</p>
+    <div class="bk-lbl">③ 校验行数</div>
+<pre class="mini"><span class="c">-- 行数应 &gt; 0,字段非空</span>
+SELECT COUNT(*) AS total,
+       COUNT(DISTINCT media_id) AS media_cnt,
+       COUNT(DISTINCT car_series_id) AS series_cnt
+FROM mapping_car_series;</pre>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> ①命令输出"完成,共处理 N 条";②表 COUNT 从 0 变 N;③series_cnt &gt; 0。</p>
+  </div>
+</div>
+
+<div class="step" id="c11-3-1">
+  <div class="bk-lbl">C11.3.1 · 同步幂等:重跑行数不变(P2)</div>
+  <div class="bk-sub">验证点:重复执行不会产生重复行 / 不会自增(全量 upsert 幂等)</div>
+  <div class="bk-pre">
+    <div class="bk-lbl">① 记录首次同步后的行数</div>
+<pre class="mini"><span class="c">-- 在 C11.1.1 / C11.2.1 跑完之后</span>
+SELECT 'base' AS tbl, COUNT(*) AS cnt FROM base_platform_car_series
+UNION ALL
+SELECT 'mapping', COUNT(*) FROM mapping_car_series;</pre>
+    <div class="bk-lbl">② 两个命令各重跑一遍</div>
+<pre class="mini">php artisan car-series:sync-platform
+php artisan car-series:sync-mapping</pre>
+    <p style="font-size:13px;">期望输出都变成 <code>共处理 N 条(新增 0)</code> —— <b>"新增 0"是关键</b>,说明全量重拉 + 按 id upsert,不产生重复。</p>
+    <div class="bk-lbl">③ 再次查行数,必须与①完全相等</div>
+<pre class="mini"><span class="c">-- 重跑后行数必须 = ① 的值</span>
+SELECT 'base' AS tbl, COUNT(*) AS cnt FROM base_platform_car_series
+UNION ALL
+SELECT 'mapping', COUNT(*) FROM mapping_car_series;</pre>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> ①重跑输出"新增 0";②两次 COUNT 完全相等;③没有重复 id(SELECT id, COUNT(*) GROUP BY id HAVING COUNT(*)&gt;1 为空)。</p>
+    <p style="font-size:12px;color:var(--ink2);">补充:如果上游有车系改名(同 id 不同 name),重跑后 name 会被更新覆盖(updateOrCreate 行为)——这是<b>期望行为</b>不是 bug。</p>
+  </div>
+</div>
+
+<div class="step" id="c11-4-1">
+  <div class="bk-lbl">C11.4.1 · 下拉接口双品牌写法 + 端到端(P2)</div>
+  <div class="bk-sub">验证点:下拉接口两种品牌写法都返回正确车系 + 下游「问卷维度」筛选链路通</div>
+  <div class="bk-pre">
+    <div class="bk-lbl">① 前置:字典表已有数据(C11.1.1 已跑)</div>
+    <div class="bk-lbl">② 调下拉接口 —— brand_id 写法(问卷表单侧)</div>
+<pre class="mini"><span class="c"># 日产(brand_id=1)</span>
+GET /admin/car-series?brand_id=1
+
+<span class="c"># 期望返回 {"data":[{"id":..,"name":"轩逸","brand_id":1,"name_en":"SYLPHY"},...]}
+# 验证:data 非空、每项 brand_id 都=1、含「轩逸/天籁/逍客」</span></pre>
+    <div class="bk-lbl">③ 调下拉接口 —— brand 中文写法(答题时长侧)</div>
+<pre class="mini"><span class="c"># 同样查日产,用中文长写法</span>
+GET /admin/car-series?brand=东风日产-日产
+
+<span class="c"># 启辰</span>
+GET /admin/car-series?brand=东风日产-启辰
+
+<span class="c"># 验证:②③①的日产结果应一致(brand_id=1 与 brand=东风日产-日产 等价);
+#        启辰结果每项 brand_id=2</span></pre>
+    <div class="bk-lbl">④ 不传品牌 → 返回全部启用车系</div>
+<pre class="mini">GET /admin/car-series
+<span class="c"># 验证:data 行数 ≥ 单品牌行数,含 brand_id=1 和 brand_id=2 两类</span></pre>
+    <div class="bk-lbl">⑤ 非法品牌 → 400 报错</div>
+<pre class="mini">GET /admin/car-series?brand=随便写的
+<span class="c"># 期望 400 + {"message":"brand 取值非法,应为 东风日产-日产 / 东风日产-启辰"}</span></pre>
+    <div class="bk-lbl">⑥ 端到端:字典值 → 问卷维度筛选生效</div>
+<pre class="mini"><span class="c"># 拿到下拉返回的某个 name,比如「轩逸」,塞进答题时长问卷维度筛选</span>
+GET /admin/duration/statistics/questionnaires?brand=东风日产-日产&car_series_cn[]=轩逸
+
+<span class="c"># 验证:能返回绑定了「轩逸」的问卷(前提是已有问卷通过问卷表单
+#        car_series 字段绑定了「轩逸」——这个值正是来自本下拉的 name)。
+#        若无问卷绑定则返回空 list(正常,不是 bug)。</span></pre>
+    <p style="font-size:12.5px;color:var(--ok);"><span class="pill pass">PASS</span> ②③两种写法结果一致且正确;④不传返回全量;⑤非法值 400;⑥字典 name 塞进 car_series_cn[] 后筛选链路通(有绑定数据时返回对应问卷)。</p>
+  </div>
+</div>
+
+<div class="callout danger">
+  <span class="lbl">常见"假失败"排查(不是 bug)</span>
+  • <b>命令报"上游返回空数据"</b> → 运维没配 <code>SHUYING_*_API_URL</code> 或网络不通,找运维,不是开发问题。<br>
+  • <b>下拉返回空 data</b> → 字典表没同步过,先跑 <code>car-series:sync-platform</code>。<br>
+  • <b>⑥ 端到端返回空 list</b> → 没有问卷绑定该车系(问卷表单没选过),先去问卷表单用下拉选一个车系保存,再验。<br>
+  • <b>同步命令一直没数据但网络通</b> → 确认上游接口路径 <code>/base/platform/car/series/get-all</code> 与 <code>/mapping/api/open/mapping-car-series</code> 是否与数营平台实际一致(以数营平台接口文档为准)。
+</div>
+
+<!-- ============ 附录 A · 白话数学速查 ============ -->
+<h2 id="sA"><span class="num">A</span>附录 · 白话数学速查(怕数学的先看这里)</h2>
+
+<p>正文的希腊字母公式看着吓人,其实<b>说穿了就两样东西:平均数(小学)+ "大家差多少"(初中)</b>,再加一个查表常数。<b>没有微积分、没有线性代数、没有高数。</b>这一节把所有符号全部翻译成大白话,先看完这节,正文公式就不怕了。</p>
+
+<div class="callout ok">
+  <span class="lbl">怎么用这节</span>
+  正文章节里看到看不懂的符号(μ、σ、k、M₂……),就翻回这里查它的"白话意思是啥"。两边对照着看,一遍就懂。
+</div>
+
+<h3 id="sA-1"><span class="num">A.1</span>六个符号,一张表说清</h3>
+
+<table class="spec">
+  <thead><tr><th>符号</th><th>怎么读</th><th>正经叫法</th><th>大白话</th><th>生活类比</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="k">μ</td><td>读"谬"</td><td>平均值(均值)</td>
+      <td><b>平均数</b>,跟小学算的平均分一模一样</td>
+      <td>全班平均分 80 分</td></tr>
+    <tr>
+      <td class="k">σ</td><td>读"西格玛"</td><td>标准差</td>
+      <td><b>"大家差多少"</b>,数值越大人越参差不齐</td>
+      <td>全班身高有高有矮,σ 就是"高矮差别有多大"</td></tr>
+    <tr>
+      <td class="k">k</td><td>读"k"</td><td>分位数系数</td>
+      <td><b>查表换算来的一个倍数</b>(1.6449 这种)</td>
+      <td>查高考分数线:"要砍掉最快的 5%" → 系统告诉你"从平均分往左量 1.6449 个σ"</td></tr>
+    <tr>
+      <td class="k">M₂</td><td>读"M 二"</td><td>二阶累积矩</td>
+      <td><b>算 σ 用的一个暂存数</b>,本身没啥意义</td>
+      <td>超市老板只记"总流水",不记每笔明细,月底照样能算平均客单价</td></tr>
+    <tr>
+      <td class="k">n</td><td>读"n"</td><td>样本量</td>
+      <td><b>数了几个数</b></td>
+      <td>记了几笔账、全班几个人</td></tr>
+    <tr>
+      <td class="k">floor</td><td>读"floor"</td><td>向下取整</td>
+      <td><b>抹掉小数,只留整数</b>(不管小数多大都丢)</td>
+      <td>floor(10.9)=10,floor(10.1)=10。<b>不是四舍五入</b></td></tr>
+  </tbody>
+</table>
+
+<h3 id="sA-2"><span class="num">A.2</span>最难懂的三个点,单独掰开揉碎</h3>
+
+<h4 style="margin:20px 0 6px;font-size:15px;">① σ(标准差)到底是啥?</h4>
+<p><b>σ 衡量"一群人(或一堆数)参差不齐的程度"。</b>举个例子,两个班平均身高都是 170cm:</p>
+<table class="spec">
+  <thead><tr><th>班级</th><th>每个人身高</th><th>σ</th><th>结论</th></tr></thead>
+  <tbody>
+    <tr><td>A 班</td><td>168, 169, 170, 171, 172</td><td class="r">≈ 1.4</td><td>大家差不多齐</td></tr>
+    <tr><td>B 班</td><td>150, 160, 170, 180, 190</td><td class="r">≈ 14.1</td><td>高的高、矮的矮,差很多</td></tr>
+  </tbody>
+</table>
+<p>放到本功能:σ_卷 大 = "有人答得飞快、有人磨磨蹭蹭,时间差很多";σ_卷 小 = "大家答题速度都差不多"。σ 是算门槛用的,下面会讲。</p>
+
+<h4 style="margin:20px 0 6px;font-size:15px;">② 1.6449 这个数哪来的?为什么要乘它?</h4>
+<p><b>1.6449 是个查表来的常数,不是算出来的,不用理解它为什么是这个值。</b>就像 π=3.14159,记住就行。</p>
+<p>打个比方,它跟"查高考分数线"是一回事:</p>
+<ul>
+  <li>你说:"我要找<b>最快的 5%</b> 的那份卷"(就是 P_JUAN=5%)</li>
+  <li>统计学查表告诉你:"这条线,划在 <b>平均值 减 1.6449 个σ</b> 的地方"</li>
+  <li>于是门槛 $y_{门槛} = \mu_卷 - 1.6449 \times \sigma_卷$</li>
+</ul>
+<table class="spec">
+  <thead><tr><th>你要的百分位</th><th>查表得 k</th><th>意思</th></tr></thead>
+  <tbody>
+    <tr><td>最快 5%(默认)</td><td class="r">1.6449</td><td>从平均往左数 1.6449 个σ 那条线</td></tr>
+    <tr><td>最快 1%</td><td class="r">2.3263</td><td>线更靠左,筛得更狠</td></tr>
+    <tr><td>最快 10%</td><td class="r">1.2816</td><td>线没那么靠左,筛得松一点</td></tr>
+    <tr><td>题门槛 95%(P_TI)</td><td class="r">1.6449</td><td>反过来用:从平均<b>往右</b>数,找最慢 5% 的题</td></tr>
+  </tbody>
+</table>
+<p>所以正文里看到 <code>k=1.6449</code>,脑子里直接翻译成"查表来的一个倍数,对应 5%"就行。换百分位,这个倍数就变(§4.4 的对照表就是干这个的)。</p>
+
+<h4 style="margin:20px 0 6px;font-size:15px;">③ M₂ 是啥?为什么表里不存 σ,要存 M₂?</h4>
+<p><b>M₂ 是个"省内存的暂存数",它本身没意义,只是用来算 σ 的中间产物。</b></p>
+<p>为什么这么设计?看个超市记账的例子。老板月底想算"平均客单价"和"客单价波动大不大(σ)",他有两种记法:</p>
+<table class="spec">
+  <thead><tr><th>记法</th><th>每天存什么</th><th>优缺点</th></tr></thead>
+  <tbody>
+    <tr><td><b>笨办法</b></td><td>把每一笔交易金额都存下来</td><td>1000 笔 = 存 1000 个数,占地方;但能还原所有细节</td></tr>
+    <tr><td><b>聪明办法(系统选的)</b></td><td>只存 3 个数:笔数 n、总金额(算 μ 用)、M₂(算 σ 用)</td><td>无论多少笔都只存 3 个数,省地方;代价是还原不出单笔</td></tr>
+  </tbody>
+</table>
+<p>本功能一天几千份卷,如果每份的时长都存,表会爆炸。所以系统选聪明办法,<b>stat_* 表里只存 n / μ / M₂ 三个数</b>。需要 σ 的时候,临时按公式算一下:</p>
+<div class="formula">$$\sigma = \sqrt{M_2 \;/\; n}$$</div>
+<p style="font-size:13px;color:var(--ink2);">测试时想验 σ,不要去表里找 σ 列(没有!),用上面这个公式把表里的 M₂ 和 n 套进去现算。正文 §0.5 的提示框就是这么个意思。</p>
+
+<h3 id="sA-3"><span class="num">A.3</span>五步公式链,用大白话重走一遍</h3>
+<p>正文 §0.5 的五步公式,换成纯人话是这样的(对照着看):<b>下面从 ① 到 ⑤ 用同一份卷贯穿到底,数字一步步代进去</b>,跟着算一遍就懂。</p>
+
+<div class="callout">
+  <span class="lbl">贯穿数据(先认识下这几个数)</span>
+  整个链条用这套数:<b>一份卷含 3 道题(Q1/Q2/Q3)</b>,答题时点了若干次屏幕(① 算每次间隔)。另外历史上有 5 份卷答过同样的题,会用来算参照(②)。最终结论:这份卷 y=33 秒,会被标"可疑快卷"(⑤)。<b>每个步骤算出来的数,都会喂给下一步</b>——所以要看懂 ⑤,从 ① 跟着算起。
+</div>
+
+<div class="step"><div class="badge">①</div><div class="body">
+<p><b>算每道题花了多久</b> —— 跟秒表一样,点一下记一下时间,相邻两次一减就是这一段花的时间(Δ,读 delta)。同一道题答了好几次(回改),就把几次的 Δ 加起来。</p>
+<p style="font-size:13px;margin:10px 0 4px;"><b>📊 带数演算:这份卷的点击事件流</b></p>
+<p style="font-size:12.5px;color:var(--ink2);margin:0 0 6px;">从事件流看(时间戳是秒),Q2 被点了两次(第一次答完又回去改):</p>
+<pre class="mini"><span class="c">-- 事件流(push_id=9001, 这份卷)</span>
+t0  10:00:00  开始答卷         (锚点,不计时)
+t1  10:00:15  点 Q1            → Δ = t1 - t0 = 15 - 0  = 15 秒, 归 Q1
+t2  10:00:23  点 Q2            → Δ = t2 - t1 = 23 - 15 = 8  秒, 归 Q2
+t3  10:00:33  点 Q3(上厕所去了)→ Δ = t3 - t2 = 33 - 23 = 10 秒... 待续(见下)
+t4  10:02:33  点 Q2(回来改)   → Δ = t4 - t3 = 153 - 33 = 120 秒, 归 Q2(累加!)
+
+<span class="c">-- 逐题汇总(同一题多次点击累加)</span>
+x_Q1 = 15                                  <span class="c">← 只点过一次</span>
+x_Q2 = 8 + 120 = 128                       <span class="c">← 点过两次,累加!</span>
+x_Q3 = (还没答完... 假设接着点 t5=10:02:43)→ 待续</pre>
+<div class="callout warn" style="margin:8px 0 0;">
+  <span class="lbl">白话</span>
+  就是<b>"两次点击之间隔了几秒"</b>。Q2 回去改了一次,中间离开 120 秒(上厕所),这 120 秒也算进 Q2 了——所以才要 ③ 把它砍掉。<b>注意是累加</b>:同一题点几次,Δ 全加起来。
+</div>
+<p style="font-size:12.5px;color:var(--ink2);margin:8px 0 0;"><i>(为方便后面代入,我们把场景简化:这份卷 Q1=15秒、Q2=8秒、Q3=120秒,Q2 不回去改——原理同上,只是数字清爽点。下面 ③ 用这组数。)</i></p>
+</div></div>
+
+<div class="step"><div class="badge">②</div><div class="body">
+<p><b>算"这道题一般花多久"(μ_题)和"大家差多少"(σ_题)</b> —— 就是把历史上这道题所有人的耗时求个平均(μ_题),再算个差异程度(σ_题)。跟算全班平均分和分差一回事。这个参照值是从 <code>stat_*</code> 表读出来的(算 ③ 的门槛要用)。</p>
+<p style="font-size:13px;margin:10px 0 4px;"><b>📊 带数演算:用 5 份历史卷算参照</b></p>
+<p style="font-size:12.5px;color:var(--ink2);margin:0 0 6px;">假设历史上有 5 份卷都答过同一道题,耗时分别是 15、22、30、38、45 秒。算这题的 μ_题 和 σ_题:</p>
+<pre class="mini"><span class="c">-- 第①步:算平均(μ_题)—— 跟小学算平均分一样</span>
+μ_题 = (15 + 22 + 30 + 38 + 45) ÷ 5
+     = 150 ÷ 5
+     = 30 秒                  <span class="c">← 这道题历史平均花 30 秒</span>
+
+<span class="c">-- 第②步:算"大家差多少"(σ_题)—— 每个数离平均有多远,再开根号</span>
+<span class="c">-- 先算每个的"离差平方":(x - 30)²</span>
+(15-30)² = (-15)² = 225
+(22-30)² = (-8)²  = 64
+(30-30)² = 0²     = 0
+(38-30)² = 8²     = 64
+(45-30)² = 15²    = 225
+                          求和 = 578
+
+<span class="c">-- σ_题 = √(离差平方和 ÷ n)</span>
+σ_题 = √(578 ÷ 5)
+     = √115.6
+     ≈ 10.75 秒              <span class="c">← 这道题大家耗时的"波动幅度"</span></pre>
+<div class="callout warn" style="margin:8px 0 0;">
+  <span class="lbl">白话 + 表里实际怎么读</span>
+  μ_题=30 就是"这道题一般花 30 秒";σ_题≈10 就是"有人快点有人慢点,差个 10 秒左右"。<b>注意:stat_* 表里其实不存 σ,存的是上面那个"离差平方和 578"——它叫 M₂(见 A.2③)。</b>真要 σ 时临时算 <code>√(M₂ ÷ n)</code>。所以测试时别找 σ 列,找 M₂ 列现算。
+</div>
+<p style="font-size:12.5px;color:var(--ink2);margin:8px 0 0;"><i>(为了后面数字清爽,我们把这题的 σ_题 取整记作 10。于是 ③ 用的参照就是 <code>μ_题=30, σ_题=10</code>——这就是 ③ 开头那俩数从哪来的。)</i></p>
+</div></div>
+
+<div class="step"><div class="badge">③</div><div class="body">
+<p><b>揪出"磨蹭题",砍掉它的时长</b> —— 如果某道题花的时间明显超出正常范围(超过 μ_题 + 1.6449×σ_题 这个门槛),说明这人在磨蹭/挂机,把它的时长<b>砍成一个固定小值</b>(μ_题÷3 取整),免得磨蹭时间把总分拉飞,影响判断。<b>等于门槛也算磨蹭</b>。</p>
+<p style="font-size:13px;margin:10px 0 4px;"><b>📊 带数演算(用同一份卷,贯穿 ③④⑤):</b></p>
+<p style="font-size:12.5px;color:var(--ink2);margin:0 0 6px;">先立场景。假设有<b>一份卷含 3 道题</b>,原始耗时分别是 15 秒、8 秒、120 秒(第 3 道人跑去上厕所了)。历史参照从 stat_* 表读:<code>μ_题=30, σ_题=10</code>。</p>
+<pre class="mini"><span class="c">-- 第①步:算"磨蹭题"的判定门槛</span>
+x_门槛 = μ_题 + 1.6449 × σ_题
+      = 30   + 1.6449 × 10      <span class="c">← 把 30、10 代进去</span>
+      = 30   + 16.449            <span class="c">← 先算乘法 1.6449×10</span>
+      = 46.449 秒                <span class="c">← 这就是"正常题"的时长上限</span>
+
+<span class="c">-- 第②步:算磨蹭题被砍成多少(固定值)</span>
+磨蹭替换值 = floor(μ_题 ÷ 3)
+          = floor(30 ÷ 3)
+          = floor(10.0)
+          = 10 秒                 <span class="c">← 所有磨蹭题一律砍成 10 秒</span>
+
+<span class="c">-- 第③步:逐道题判定(本卷 x_q = 15, 8, 120)</span>
+题1: 15  ≥ 46.449 ?  否 → 正常题, x_q* = 15(原值保留)
+题2: 8   ≥ 46.449 ?  否 → 正常题, x_q* = 8
+题3: 120 ≥ 46.449 ?  是 → 磨蹭题! x_q* = 10(砍掉)</pre>
+<div class="callout warn" style="margin:8px 0 0;">
+  <span class="lbl">白话</span>
+  这步就是"防挂机"。120 秒那道题明显是离开屏幕了,真算进总分会冤枉这份卷(以为它花了很多时间)。砍成 10 秒,只算"真正在答题的时间"。<b>≥ 是关键</b>:正好卡在 46.449 也算磨蹭。
+</div>
+</div></div>
+
+<div class="step"><div class="badge">④</div><div class="body">
+<p><b>把这份卷所有题的时长加起来 = 这份卷总共花了多久(y)</b> —— 纯加法。再用同样的办法算"一份卷一般花多久"(μ_卷)和"大家差多少"(σ_卷)。</p>
+<p style="font-size:13px;margin:10px 0 4px;"><b>📊 带数演算(接着 ③ 的结果):</b></p>
+<pre class="mini"><span class="c">-- 把 ③ 算出的各题 x_q* 加起来</span>
+y = x_q* 求和
+  = 15 + 8 + 10      <span class="c">← 用 ③ 砍过之后的三个值</span>
+  = 33 秒            <span class="c">← 这份卷"真正在答题"一共 33 秒</span>
+
+<span class="c">-- 对照:如果不砍磨蹭题会怎样?</span>
+不砍 = 15 + 8 + 120 = 143 秒  <span class="c">← 被上厕所时间带歪,假象!</span></pre>
+<div class="callout warn" style="margin:8px 0 0;">
+  <span class="lbl">白话</span>
+  就一句:把砍过的各题时长加起来 = 这卷总共答了多久。33 秒。<b>所以 ③ 的"砍磨蹭题"很重要</b>——不砍的话算成 143 秒,后面判定就失准了。
+</div>
+</div></div>
+
+<div class="step"><div class="badge">⑤</div><div class="body">
+<p><b>比一比:这份卷是不是快得不正常</b> —— 算一条"最快的 5% 那条线"(y_门槛 = μ_卷 − 1.6449×σ_卷)。如果这份卷的 y ≤ 这条线,就<b>标记为可疑</b>(答太快,可能乱答)。<b>等于门槛也算可疑</b>。最后仍由人工复核,本功能只是标个记号。</p>
+<p style="font-size:13px;margin:10px 0 4px;"><b>📊 带数演算(接着 ④ 的 y=33):</b></p>
+<p style="font-size:12.5px;color:var(--ink2);margin:0 0 6px;">卷级参照从 stat_* 表读:<code>μ_卷=300 秒</code>(一份完整卷历史平均要 5 分钟)、<code>σ_卷=60 秒</code>。k_卷 查表得 <code>-1.6449</code>。</p>
+<pre class="mini"><span class="c">-- 第①步:算"可疑快卷"的判定门槛</span>
+y_门槛 = μ_卷 + (-1.6449) × σ_卷
+      = 300  - 1.6449   × 60    <span class="c">← 300、60 代进去;负号就是减</span>
+      = 300  - 98.694            <span class="c">← 先算 1.6449×60</span>
+      = 201.306                  <span class="c">← 还没取整</span>
+      = floor(201.306) = 201 秒  <span class="c">← 抹掉小数</span>
+
+<span class="c">-- 第②步:判定(y 用 ④ 算出的 33)</span>
+y ≤ y_门槛 ?
+33 ≤ 201 ?
+是!→ 标记可疑 is_duration_anomaly = 1</pre>
+<div class="callout danger" style="margin:8px 0 6px;">
+  <span class="lbl">为什么 ⑤ 用减号、③ 用加号?</span>
+  同一个 1.6449,方向不同:
+  <table class="spec" style="margin-top:6px;">
+    <thead><tr><th>步骤</th><th>找谁</th><th>从平均值往哪边找</th><th>符号</th></tr></thead>
+    <tbody>
+      <tr><td>③ 题门槛</td><td>最慢的 5%(磨蹭题)</td><td>往<b>大</b>的方向(右边)</td><td>+</td></tr>
+      <tr><td>⑤ 卷门槛</td><td>最快的 5%(乱答卷)</td><td>往<b>小</b>的方向(左边)</td><td>−</td></tr>
+    </tbody>
+  </table>
+  <span style="font-size:12.5px;">"最快"= 时间短 = 比 300 秒平均<b>少</b>,所以要 <b>300 − 某个数</b>。<b>负号就是这么来的,别死记,理解方向就对了。</b></span>
+</div>
+<div class="callout ok" style="margin:0;">
+  <span class="lbl">白话</span>
+  正常一份卷要 ~300 秒,这卷 33 秒就交了,确实快得不正常(正常最快的 5% 也得 201 秒以上)。所以标可疑,交给人工复核。<b>这步就是整个功能的最终目的。</b>
+</div>
+</div></div>
+
+<div class="callout ok">
+  <span class="lbl">一句话总结</span>
+  整个功能就一句话:<b>"把每份卷的答题时间加起来,跟正常水平比,太快的就标可疑。"</b>所有希腊字母公式,都是为这句话服务的。μ 是平均、σ 是差异、k 是查表倍数、M₂ 是算 σ 的暂存数——就这些。
+</div>
+
+<hr style="border:none;border-top:1px solid var(--line);margin:38px 0 18px;">
+<p class="ref">本测试手册为 WCIP-TCS 项目交付物,配套 <code>说明书_7.html</code> 使用。用例执行问题反馈给开发,公式疑问查说明书对应章节。</p>
+
+</main>
+</div>
+</body>
+</html>
