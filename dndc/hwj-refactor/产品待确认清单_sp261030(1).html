@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>产品待确认清单（sp_261030 · S1）</title>
+<style>
+  :root{
+    --ink:#17212b; --ink-2:#425466; --ink-3:#7a8a9a;
+    --bg:#f4f6f9; --card:#ffffff; --line:#e3e8ef;
+    --brand:#1f5eff; --brand-soft:#eaf0ff;
+    --p0:#d92d20; --p0-soft:#fef3f2;
+    --p1:#b54708; --p1-soft:#fffaeb;
+    --p2:#067647; --p2-soft:#ecfdf3;
+    --proto:#6d28d9; --proto-soft:#f3eeff;
+    --v4:#0e7090; --v4-soft:#e6f6fb;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:14px; line-height:1.65;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px 64px}
+  header.top{
+    background:linear-gradient(135deg,#101c2d 0%,#1a2f4d 60%,#1f5eff 160%);
+    color:#fff; padding:34px 0 28px; margin-bottom:22px;
+  }
+  header.top .wrap{padding-bottom:0}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#9fb6d8;margin-bottom:8px}
+  h1{margin:0 0 8px;font-size:28px;line-height:1.3;font-weight:700}
+  .sub{color:#c9d6e8;font-size:13px;max-width:860px}
+  .stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  .stat{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:8px 14px;font-size:12px;color:#dce6f5}
+  .stat b{font-size:18px;color:#fff;margin-right:4px}
+  .toolbar{
+    position:sticky;top:0;z-index:20;background:rgba(244,246,249,.94);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin-bottom:20px;
+  }
+  .toolbar .wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
+  .nav{display:flex;gap:6px;flex-wrap:wrap;margin-right:auto}
+  .nav a{color:var(--ink-2);text-decoration:none;font-size:12px;padding:5px 9px;border-radius:7px}
+  .nav a:hover{background:#e9eef6;color:var(--ink)}
+  button{
+    font:inherit;font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink-2);
+    padding:7px 12px;border-radius:8px;cursor:pointer;
+  }
+  button:hover{border-color:#c3cedd;color:var(--ink)}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  button.primary:hover{background:#174cd6}
+  .filters{display:flex;gap:6px;flex-wrap:wrap}
+  .filters button.on{background:var(--brand-soft);border-color:#b9ccff;color:var(--brand);font-weight:600}
+  .progress{font-size:12px;color:var(--ink-3);margin-left:4px}
+  .progress b{color:var(--brand)}
+  .note{
+    background:#fff;border:1px solid var(--line);border-left:4px solid var(--brand);
+    border-radius:10px;padding:14px 16px;margin-bottom:22px;color:var(--ink-2);font-size:13px;
+  }
+  .note strong{color:var(--ink)}
+  section{margin-bottom:30px;scroll-margin-top:76px}
+  .sec-head{display:flex;align-items:baseline;gap:10px;margin:0 0 12px}
+  .sec-head h2{font-size:18px;margin:0}
+  .sec-head .hint{font-size:12px;color:var(--ink-3)}
+  .item{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;margin-bottom:12px;box-shadow:0 1px 2px rgba(16,24,40,.03);
+  }
+  .item.done{border-color:#b9ccff;box-shadow:0 0 0 1px #dbe6ff inset}
+  .item-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .item-head h3{font-size:15px;margin:0;font-weight:650}
+  .id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--ink-3);background:#f2f5f9;padding:2px 7px;border-radius:6px}
+  .badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:.02em}
+  .p0{color:var(--p0);background:var(--p0-soft)}
+  .p1{color:var(--p1);background:var(--p1-soft)}
+  .p2{color:var(--p2);background:var(--p2-soft)}
+  .refs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}
+  .ref{font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid transparent}
+  .ref.proto{color:var(--proto);background:var(--proto-soft);border-color:#e2d6ff}
+  .ref.v4{color:var(--v4);background:var(--v4-soft);border-color:#c8ecf7}
+  .ref.doc{color:var(--ink-3);background:#f3f5f8;border-color:#e7ebf1}
+  .grid{display:grid;grid-template-columns:1.1fr 1.6fr .9fr;gap:14px}
+  .cell label{display:block;font-size:11px;color:var(--ink-3);letter-spacing:.04em;margin-bottom:4px}
+  .cell p{margin:0;color:var(--ink-2);font-size:13px}
+  .cell.rec p{color:var(--ink);background:#f7f9fc;border:1px dashed #d8e0ea;border-radius:8px;padding:8px 10px}
+  .opts{display:flex;flex-direction:column;gap:6px}
+  .opt{
+    display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;
+    padding:7px 9px;cursor:pointer;background:#fcfdff;
+  }
+  .opt:hover{border-color:#c3cedd;background:#f7f9fd}
+  .opt input{margin-top:3px;accent-color:var(--brand)}
+  .opt span{font-size:12.5px;color:var(--ink-2);line-height:1.5}
+  .opt b{color:var(--ink);margin-right:3px}
+  .opt.selected{border-color:#9fb9ff;background:var(--brand-soft)}
+  .decided{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+  .decided ul{margin:0;padding-left:18px;color:var(--ink-2)}
+  .decided li{margin:6px 0}
+  table.refs-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:12.5px}
+  table.refs-table th,table.refs-table td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  table.refs-table th{background:#f7f9fc;color:var(--ink-2);font-weight:600}
+  table.refs-table tr:last-child td{border-bottom:none}
+  .copybar{
+    display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;
+  }
+  .copybar textarea{
+    flex:1 1 520px;min-height:150px;border:1px solid var(--line);border-radius:8px;padding:10px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--ink-2);background:#fbfcfe;resize:vertical;
+  }
+  .copybar .side{display:flex;flex-direction:column;gap:8px;min-width:160px}
+  .hintline{font-size:12px;color:var(--ink-3)}
+  .manual{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+  .manual label{display:block;font-size:11px;color:var(--ink-3);letter-spacing:.04em;margin-bottom:4px}
+  .manual textarea{
+    width:100%;min-height:44px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;
+    font:inherit;font-size:12.5px;color:var(--ink);background:#fcfdff;resize:vertical;
+  }
+  .manual textarea:focus{outline:none;border-color:#9fb9ff;background:#fff}
+  .manual textarea.filled{border-color:#9fb9ff;background:var(--brand-soft)}
+  .manual .tag{font-size:11px;color:var(--brand);margin-left:6px}
+  .savebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px;font-size:12px;color:var(--ink-3)}
+  .savebar .dot{width:7px;height:7px;border-radius:50%;background:#12b76a;display:inline-block;margin-right:5px}
+  .savebar .dot.off{background:#c3cedd}
+  .btn-like{
+    display:inline-block;font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink-2);
+    padding:7px 12px;border-radius:8px;cursor:pointer;
+  }
+  .btn-like:hover{border-color:#c3cedd;color:var(--ink)}
+  .globalnote{width:100%;min-height:70px;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;font-size:13px;color:var(--ink-2);background:#fbfcfe;resize:vertical}
+  .hide{display:none!important}
+  footer{color:var(--ink-3);font-size:12px;text-align:center;margin-top:34px}
+  @media (max-width:900px){
+    .grid{grid-template-columns:1fr}
+    .cell.rec p{margin-top:2px}
+  }
+  @media print{
+    body{background:#fff;font-size:12px}
+    header.top{background:#101c2d!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .toolbar,.copybar,footer .noprint{display:none!important}
+    .item{break-inside:avoid;box-shadow:none}
+    section{break-inside:auto}
+    a{color:inherit;text-decoration:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">Product Confirmation Checklist</div>
+    <h1>产品待确认清单（sp_261030 · S1）</h1>
+    <div class="sub">整理日期：2026-11-26　｜　来源：设计评审遗留 Question（作业发布、审核、C 端作业中心、用户中心、数据接入）　｜　用途：产品逐项勾选后回传，作为设计与开发基线</div>
+    <div class="stats">
+      <div class="stat"><b>17</b>项待确认</div>
+      <div class="stat"><b>3</b>项 P0 范围/验收</div>
+      <div class="stat"><b>13</b>项 P1 业务口径</div>
+      <div class="stat"><b>1</b>项 P2 交互展示</div>
+      <div class="stat"><b>10</b>项已由用户故事 v23 明确</div>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="wrap">
+    <nav class="nav">
+      <a href="#scope">S1 范围</a>
+      <a href="#gap">发布查缺</a>
+      <a href="#balance">任务平衡</a>
+      <a href="#rules">业务规则</a>
+      <a href="#ux">交互展示</a>
+      <a href="#decided">已定口径</a>
+      <a href="#resolved">用户故事已定</a>
+      <a href="#refs">原型索引</a>
+    </nav>
+    <div class="filters">
+      <button data-filter="all" class="on">全部</button>
+      <button data-filter="p0">P0</button>
+      <button data-filter="p1">P1</button>
+      <button data-filter="p2">P2</button>
+      <button data-filter="undone">未确认</button>
+      <button data-filter="done">已确认</button>
+    </div>
+    <span class="progress">已确认 <b id="doneCount">0</b> / 17</span>
+    <button class="primary" onclick="exportMd()">导出回复文件</button>
+    <button onclick="window.print()">打印 / 导出 PDF</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="note">
+    <strong>怎么用：</strong>每个事项勾选一个选项即视为产品结论；若选项都不合适，直接在每项下方「<strong>人工回复</strong>」里写明你的结论（也可勾选后补充）。
+    填写内容会<strong>自动保存在本机浏览器</strong>，中途关闭可继续；全部填完后点右上角「<strong>导出回复文件</strong>」把文件发回即可。
+    每项下方标注了对应<strong>原型页面</strong>与<strong>功能清单 V4 条目</strong>，可直接对照原型确认。P0 项影响 S1 范围与验收，请优先回复。
+    <br><strong>已按《用户故事 v23》逐项复核：</strong>原 27 项中有 10 项文档已给出明确口径，已移到第七节「用户故事已定」，<strong>不用再回答</strong>；以下 17 项是文档确实没覆盖或与设计冲突、需要你拍板的部分。
+  </div>
+  <div class="savebar"><span><span class="dot off" id="saveDot"></span><span id="saveState">尚未保存</span></span><span>·</span><span>填充进度会自动记录在本机，不会上传</span></div>
+
+  <!-- ================= 一、S1 范围与验收 ================= -->
+  <section id="scope">
+    <div class="sec-head"><h2>一、S1 范围与验收</h2><span class="hint">P0 · 影响本轮交付边界</span></div>
+
+    <article class="item" data-id="S-3" data-priority="P0">
+      <div class="item-head"><span class="id">S-3</span><span class="badge p0">P0</span><h3>数据接入域的验收基线怎么定？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 数据接入（平台台账 / 采集任务 / 新闻池 / 声量导入）</span><span class="ref v4">功能清单 V4/V8 未收录该域</span><span class="ref doc">用户故事 v23 未覆盖数据接入域</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>页面已确认保留；功能清单最新版仍未收录数据接入域，设计侧已有 28 个功能。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="S-3" value="A"><span><b>A</b>以《数据接入详细设计》28 个功能作为验收基线</span></label>
+          <label class="opt"><input type="radio" name="S-3" value="B"><span><b>B</b>先补入功能清单，再按清单验收</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。不阻塞开发，验收时按设计文档逐项核对。</p></div>
+      </div>
+    </article>
+
+    <article class="item" data-id="S-4" data-priority="P0">
+      <div class="item-head"><span class="id">S-4</span><span class="badge p0">P0</span><h3>新闻池 / 声量导入页面归哪个菜单？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 新闻池、声量导入</span><span class="ref v4">功能清单 V4 #218（新闻池）</span><span class="ref doc">用户故事 v23：新闻池归大赛/人才域、声量导入归运营分析（US-TI-09）</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>设计称由运营台其他模块承载，前端实际落在「数据接入」菜单下。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="S-4" value="A"><span><b>A</b>归数据接入菜单（与当前实现一致）</span></label>
+          <label class="opt"><input type="radio" name="S-4" value="B"><span><b>B</b>迁到其他模块，请注明菜单层级</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。减少改动，避免菜单归属反复。</p></div>
+      </div>
+    </article>
+
+    <article class="item" data-id="S-5" data-priority="P0">
+      <div class="item-head"><span class="id">S-5</span><span class="badge p0">P0</span><h3>「平台标签 / 能力标签」S1 怎么展示？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V41 · 我的主页</span><span class="ref v4">功能清单 V4 #115、#163</span><span class="ref doc">用户故事 v23：我的主页展示本月平台标签与能力标签（US-CU-04/21）</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>用户故事要求展示；但标签归属人才域（后续批次），S1 暂无数据来源。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="S-5" value="A"><span><b>A</b>S1 隐藏这两个标签区</span></label>
+          <label class="opt"><input type="radio" name="S-5" value="B"><span><b>B</b>S1 先由运营维护一份静态标签</span></label>
+          <label class="opt"><input type="radio" name="S-5" value="C"><span><b>C</b>展示「待完善」占位</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。不伪造标签，避免后续迁移与口径漂移。</p></div>
+      </div>
+    </article>
+
+  </section>
+
+  <!-- ================= 二、发布查缺 ================= -->
+  <section id="gap">
+    <div class="sec-head"><h2>二、发布查缺数量口径</h2><span class="hint">P1 · 影响查缺 / 补发验收</span></div>
+
+    <article class="item" data-id="P1-3" data-priority="P1">
+      <div class="item-head"><span class="id">P1-3</span><span class="badge p1">P1</span><h3>补发任务是否计入查缺？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 查缺「一键补发」</span><span class="ref v4">功能清单 V4 #128</span><span class="ref doc">用户故事 v23：补发只推缺口名单、次数单列不计轮次（R-25）</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>补发次数已单列、不占常规轮次；但补发是否计入查缺覆盖率/应推送人数未定。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="P1-3" value="A"><span><b>A</b>计入，并标记「补发」来源</span></label>
+          <label class="opt"><input type="radio" name="P1-3" value="B"><span><b>B</b>完全不计入，单独看补发次数</span></label>
+          <label class="opt"><input type="radio" name="P1-3" value="C"><span><b>C</b>只计已推送，不计计划量</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。补发也是真实推送量，需纳入闭环并与常规任务区分。</p></div>
+      </div>
+    </article>
+
+    <article class="item" data-id="P1-4" data-priority="P1">
+      <div class="item-head"><span class="id">P1-4</span><span class="badge p1">P1</span><h3>统计哪些任务？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 查缺卡「数据截止 T+1 09:00」</span><span class="ref v4">功能清单 V4 #5</span><span class="ref doc">用户故事 v23：缺漏只认已发布任务的应发未发（R-25 第 1 条）</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>缺漏只认已发布任务的应发未发；是否把已结束任务纳入未定。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="P1-4" value="A"><span><b>A</b>仅未结束（当前）</span></label>
+          <label class="opt"><input type="radio" name="P1-4" value="B"><span><b>B</b>含已结束任务</span></label>
+          <label class="opt"><input type="radio" name="P1-4" value="C"><span><b>C</b>支持按时间窗筛选</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。查缺服务当前待补，历史缺口走报表。</p></div>
+      </div>
+    </article>
+
+    <article class="item" data-id="P1-5" data-priority="P1">
+      <div class="item-head"><span class="id">P1-5</span><span class="badge p1">P1</span><h3>未到生效日 / 非本月名单的池是否参与？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 标签覆盖池「月度清单」</span><span class="ref v4">功能清单 V4 #109–#114</span><span class="ref doc">用户故事 v23：每月 1 日生成当月全量池快照，当月不增删（§4.5）</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>月度快照已按月冻结；未到生效日或非本月名单的池是否参与未定。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="P1-5" value="A"><span><b>A</b>不参与（当前）</span></label>
+          <label class="opt"><input type="radio" name="P1-5" value="B"><span><b>B</b>参与但标记「未生效」</span></label>
+          <label class="opt"><input type="radio" name="P1-5" value="C"><span><b>C</b>仅人群组池按月排除</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。避免给未生效池生成无效补发。</p></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= 三、任务平衡 ================= -->
+  <section id="balance">
+    <div class="sec-head"><h2>三、任务平衡阈值</h2><span class="hint">P1 · 影响平衡建议与执行</span></div>
+
+    <article class="item" data-id="P2-1" data-priority="P1">
+      <div class="item-head"><span class="id">P2-1</span><span class="badge p1">P1</span><h3>缺口阈值 1.2 是否认可？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 查缺「闭环判定阈值可配」</span><span class="ref v4">功能清单 V4 #129–#130</span><span class="ref doc">用户故事 v23 未覆盖 1.2 倍率</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>计划量 ÷ 已推送量 &gt; 1.2 时建议补发。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="P2-1" value="A"><span><b>A</b>1.2（当前）</span></label>
+          <label class="opt"><input type="radio" name="P2-1" value="B"><span><b>B</b>改为「缺口率 ≥ 20%」</span></label>
+          <label class="opt"><input type="radio" name="P2-1" value="C"><span><b>C</b>按作业类型分别配置</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。与现有配置一致，改动最小；若运营觉得不直观可后续换 B。</p></div>
+      </div>
+    </article>
+
+    <article class="item" data-id="P2-2" data-priority="P1">
+      <div class="item-head"><span class="id">P2-2</span><span class="badge p1">P1</span><h3>阈值配置到哪一层？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 查缺「闭环判定阈值可配」</span><span class="ref v4">功能清单 V4 #129</span><span class="ref doc">用户故事 v23：覆盖率目标/轮次差/剔除率阈值均可配（R-25 第 5 条）</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>全局一个值，运营可在字典配置。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="P2-2" value="A"><span><b>A</b>全局（当前）</span></label>
+          <label class="opt"><input type="radio" name="P2-2" value="B"><span><b>B</b>按租户</span></label>
+          <label class="opt"><input type="radio" name="P2-2" value="C"><span><b>C</b>按品牌</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。S1 单租户运营，保留后续扩展。</p></div>
+      </div>
+    </article>
+
+    <article class="item" data-id="P2-3" data-priority="P1">
+      <div class="item-head"><span class="id">P2-3</span><span class="badge p1">P1</span><h3>「纳入排行任务占比 &gt; 60%」是否认可？基数是什么？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 任务平衡（积分 / 圈层均衡）</span><span class="ref v4">功能清单 V4 #129</span><span class="ref doc">用户故事 v23 未覆盖 60% 占比指标</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>按任务条数计算，占比超过 60% 时建议改不纳入排行。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="P2-3" value="A"><span><b>A</b>60%，按任务条数</span></label>
+          <label class="opt"><input type="radio" name="P2-3" value="B"><span><b>B</b>60%，按计划推送量</span></label>
+          <label class="opt"><input type="radio" name="P2-3" value="C"><span><b>C</b>其他值 / 按类型分别设置</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>B。平衡关注推送量，按任务条数会被小任务稀释。</p></div>
+      </div>
+    </article>
+
+    <article class="item" data-id="P2-4" data-priority="P1">
+      <div class="item-head"><span class="id">P2-4</span><span class="badge p1">P1</span><h3>积分档位边界是否认可？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 发布台奖励区 / 任务平衡</span><span class="ref v4">功能清单 V4 #129、#91</span><span class="ref doc">用户故事 v23 未定义积分档位边界</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>低 0–5 / 中 6–10 / 高 11+（含边界），按基础积分。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="P2-4" value="A"><span><b>A</b>当前分档</span></label>
+          <label class="opt"><input type="radio" name="P2-4" value="B"><span><b>B</b>0–4 / 5–9 / 10+</span></label>
+          <label class="opt"><input type="radio" name="P2-4" value="C"><span><b>C</b>由运营配置档位表</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。与当前 10 分基础示例对齐。</p></div>
+      </div>
+    </article>
+
+    <article class="item" data-id="P2-5" data-priority="P1">
+      <div class="item-head"><span class="id">P2-5</span><span class="badge p1">P1</span><h3>「改不纳入排行」批量上限与生效范围？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 任务平衡「改排行建议执行」</span><span class="ref v4">功能清单 V4 #130</span><span class="ref doc">用户故事 v23 未设批量条数上限</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>单次 ≤50 条，仅未结束已发布任务，不影响已领作业快照。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="P2-5" value="A"><span><b>A</b>按当前设计</span></label>
+          <label class="opt"><input type="radio" name="P2-5" value="B"><span><b>B</b>放宽到 200 条</span></label>
+          <label class="opt"><input type="radio" name="P2-5" value="C"><span><b>C</b>需审批后生效</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。与批量操作规范一致，已领作业快照不受影响。</p></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= 四、业务规则 ================= -->
+  <section id="rules">
+    <div class="sec-head"><h2>四、业务规则口径</h2><span class="hint">P1 · 影响开发实现与验收用例</span></div>
+
+    <article class="item" data-id="R-1" data-priority="P1">
+      <div class="item-head"><span class="id">R-1</span><span class="badge p1">P1</span><h3>视频号平台码统一用哪个？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 发布台平台 chips</span><span class="ref v4">功能清单 V4 #25</span><span class="ref doc">设计：采集平台台账为真源</span><span class="ref doc">用户故事 v23 仅用中文平台名，未定码值</span></div>
+      <div class="grid">
+        <div class="cell"><label>冲突说明</label><p>原型与 C 端示例用 <code>WECHAT_CHANNEL</code>，采集用例用 <code>WEIXIN_VIDEO</code>，存在两个写法。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="R-1" value="A"><span><b>A</b>统一为 <code>WEIXIN_VIDEO</code>（与采集平台台账一致）</span></label>
+          <label class="opt"><input type="radio" name="R-1" value="B"><span><b>B</b>统一为 <code>WECHAT_CHANNEL</code></span></label>
+          <label class="opt"><input type="radio" name="R-1" value="C"><span><b>C</b>由运营在平台台账最终确认码值</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。以采集平台台账为唯一真源；原型与前端示例同步改名。</p></div>
+      </div>
+    </article>
+
+    <article class="item" data-id="R-3" data-priority="P1">
+      <div class="item-head"><span class="id">R-3</span><span class="badge p1">P1</span><h3>截图重复校验用哪种规则？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 内容巡检（原标签巡检）「凭证巡检 8 类」</span><span class="ref v4">功能清单 V4 #152（图片重复）</span><span class="ref doc">用户故事 v23：截图指纹全库查重，多账号提交全部标记（US-AD-12）</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>用户故事已定「指纹全库查重」；指纹存储方式与重复截图处置（留存/删除）未定。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="R-3" value="A"><span><b>A</b>采集侧存截图指纹（哈希）全库查重</span></label>
+          <label class="opt"><input type="radio" name="R-3" value="B"><span><b>B</b>C 端按截图 URL 去重</span></label>
+          <label class="opt"><input type="radio" name="R-3" value="C"><span><b>C</b>删除该规则</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。可跨作业判重，最稳；成本是采集侧加一列。</p></div>
+      </div>
+    </article>
+
+    <article class="item" data-id="R-4" data-priority="P1">
+      <div class="item-head"><span class="id">R-4</span><span class="badge p1">P1</span><h3>效果数据「稳定等待期」是否独立配置？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V41 · 效果数据回填</span><span class="ref v4">功能清单 V4 #119、#264</span><span class="ref doc">用户故事 v23：申诉期不早于任务结束 + 效果稳定等待期（R-15）</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>与 48 小时回填窗口共用一个值。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="R-4" value="A"><span><b>A</b>独立配置（默认 48h）</span></label>
+          <label class="opt"><input type="radio" name="R-4" value="B"><span><b>B</b>并入 48h 单值</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。后续运营可独立调整，避免牵一发动全身。</p></div>
+      </div>
+    </article>
+
+    <article class="item" data-id="R-7" data-priority="P1">
+      <div class="item-head"><span class="id">R-7</span><span class="badge p1">P1</span><h3>素材 / 人群包是删除还是停用？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 素材库「删除保护」</span><span class="ref v4">功能清单 V4 #94</span><span class="ref doc">用户故事 v23：人群组可删除、变更留痕、不影响已发布任务（§4.5）</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>人群组已按用户故事允许删除并留痕；素材是「停用 + 引用校验」还是允许删除仍未定。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="R-7" value="A"><span><b>A</b>素材不物理删除：启停 + 引用校验</span></label>
+          <label class="opt"><input type="radio" name="R-7" value="B"><span><b>B</b>允许删除但留痕，不影响已发布任务</span></label>
+          <label class="opt"><input type="radio" name="R-7" value="C"><span><b>C</b>按角色控制删除权限</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。保护已发布任务与历史追溯。</p></div>
+      </div>
+    </article>
+
+    <article class="item" data-id="R-8" data-priority="P1">
+      <div class="item-head"><span class="id">R-8</span><span class="badge p1">P1</span><h3>草稿是否允许同品牌共享？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 草稿箱</span><span class="ref v4">功能清单 V4 #43、#75</span><span class="ref doc">用户故事 v23 未约定草稿可见范围</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>草稿仅创建人可见。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="R-8" value="A"><span><b>A</b>仅本人（当前）</span></label>
+          <label class="opt"><input type="radio" name="R-8" value="B"><span><b>B</b>同品牌运营共享</span></label>
+          <label class="opt"><input type="radio" name="R-8" value="C"><span><b>C</b>支持指定交接</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。S1 简单可控；共享涉及权限模型。</p></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= 五、交互与展示 ================= -->
+  <section id="ux">
+    <div class="sec-head"><h2>五、交互与展示</h2><span class="hint">P2 · 上线前确认即可</span></div>
+
+    <article class="item" data-id="I-3" data-priority="P2">
+      <div class="item-head"><span class="id">I-3</span><span class="badge p2">P2</span><h3>补偿建单是否展示领取人姓名 / 工号？</h3></div>
+      <div class="refs"><span class="ref proto">原型 V127 · 审核工作台（任务结果录入 / 代录）</span><span class="ref v4">功能清单 V4 #132、#137</span><span class="ref doc">用户故事 v23 未涉及补偿建单</span></div>
+      <div class="grid">
+        <div class="cell"><label>当前做法</label><p>只显示作业与领取标识，未含姓名、工号。</p></div>
+        <div class="cell"><label>可选项</label><div class="opts">
+          <label class="opt"><input type="radio" name="I-3" value="A"><span><b>A</b>仅工号脱敏展示</span></label>
+          <label class="opt"><input type="radio" name="I-3" value="B"><span><b>B</b>姓名 + 工号</span></label>
+          <label class="opt"><input type="radio" name="I-3" value="C"><span><b>C</b>不展示</span></label>
+        </div></div>
+        <div class="cell rec"><label>推荐</label><p>A。满足定位需要，隐私暴露最小。</p></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= 六、已定口径 ================= -->
+  <section id="decided">
+    <div class="sec-head"><h2>六、已定口径（知悉即可，无需回复）</h2><span class="hint">已由业务 / 技术裁决</span></div>
+    <div class="decided">
+      <ul>
+        <li><strong>《护卫军-用户故事-终版-v23》为需求基线</strong>；本次已逐项复核，文档有明确口径的按文档对齐（见第七节）。</li>
+        <li>C 端登录、签约、排行榜、品牌切换纳入 S1；用户服务按最小用户域同步建设。</li>
+        <li>积分展示允许约 30 秒延迟（增量轮询），页面展示「数据截止时间」，不伪造实时。</li>
+        <li>人才域 Banner 未就位时按降级隐藏；消息中心按用户故事纳入（见第七节 S-1）。</li>
+        <li>查缺页与任务平衡页保留；补发采用「生成草稿 → 发布台确认」两步，不直接发布。</li>
+        <li>发布字段组（视频号四项、关键词、违禁词、互动上传要求、AI 审核模板、多平台标记）随任务快照冻结，审核只读快照。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ================= 七、用户故事已明确 ================= -->
+  <section id="resolved">
+    <div class="sec-head"><h2>七、用户故事 v23 已明确（无需回复）</h2><span class="hint">原 27 项中 10 项已有确定口径，设计按文档对齐</span></div>
+    <table class="refs-table">
+      <thead><tr><th style="width:8%">编号</th><th style="width:18%">原问题</th><th style="width:48%">用户故事 v23 口径（出处）</th><th>设计动作</th></tr></thead>
+      <tbody>
+        <tr><td>S-1</td><td>消息中心是否纳入</td><td>C 端 25 页含消息中心；6 类分类、13 类消息，模板消息失败才降级站内信（US-CU-18 / §12.9）</td><td>纳入 S1：用户服务补消息表与接口，取消「空列表」降级</td></tr>
+        <tr><td>S-2</td><td>智能人群推荐</td><td>菜单「发任务配置 · AI 人群推荐」；按平台/类型/动作推荐标签，发布时预默认可改（§2.1 / US-JP-09）</td><td>纳入发布台，补原型入口与推荐规则</td></tr>
+        <tr><td>S-6</td><td>排行榜三榜</td><td>总榜 / 月榜 / 党委榜；总榜按个人累计积分、月榜按当月积分、党委榜按完成率（US-CU-21）</td><td>用户中心与 C 端改三榜口径，去掉积分/完成/效果榜</td></tr>
+        <tr><td>P1-1</td><td>查缺「计划量」</td><td>应推送人数＝周期内该队列生成的名单快照，生成后不回溯（R-25 第 2 条）</td><td>查缺改按名单快照，不再累加任务 TOTAL_QTY</td></tr>
+        <tr><td>P1-2</td><td>「已推送量」去重</td><td>按人数；补发只推缺口名单、不重复推已覆盖成员（R-25 第 2-3 条）</td><td>统一按人数统计，补发不重复计入</td></tr>
+        <tr><td>R-2</td><td>「退回后重提 1 次」</td><td>作业退回走申诉（申诉期内不限次数、末次提交为准）；仅效果回填限「1 次 + 驳回后重提 1 次」（R-15 / US-CU-15）</td><td>作业侧去掉「重提 1 次」，效果回填保留</td></tr>
+        <tr><td>R-5</td><td>审核基线是否配置化</td><td>12 条审核基线固定；超时阈值、抽检比例、重采次数等参数可配（US-AD-01）</td><td>按「基线固定 + 参数可配」实现</td></tr>
+        <tr><td>R-6</td><td>标签巡检 / 内容巡检</td><td>全篇统一「内容巡检」，菜单「审核管理 → 内容巡检（含巡检口径配置）」（§2.1）</td><td>前端、清单、原型菜单统一为内容巡检</td></tr>
+        <tr><td>I-1</td><td>登录 / 签约承载</td><td>唯一登录方式为 IAM 员工认证，首次登录签署协议，C 端设登录签约页（US-CU-02）</td><td>维持 H5 登录签约页 + IAM 校验</td></tr>
+        <tr><td>I-2</td><td>品牌切换交互</td><td>下拉切换、只列已签署品牌、切换后全站过滤并保留草稿（US-CU-03）</td><td>服务端切换接口 + 换发令牌，前端全站刷新</td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="margin-top:14px;margin-bottom:0">
+      <strong>说明：</strong>以上 10 项不再向产品提问；其中 S-1、S-2、S-6、P1-1、P1-2、R-2 与当前设计存在直接冲突，设计侧按用户故事修正并同步验收用例。若产品对某条口径有不同意见，可在第九节「整体补充说明」里写明编号与意见。
+    </div>
+  </section>
+
+  <!-- ================= 八、原型与功能清单索引 ================= -->
+  <section id="refs">
+    <div class="sec-head"><h2>八、原型页面与功能清单索引</h2><span class="hint">便于对照原型逐项确认</span></div>
+
+    <table class="refs-table">
+      <thead><tr><th style="width:16%">来源</th><th style="width:34%">页面 / 条目</th><th>对应清单项</th></tr></thead>
+      <tbody>
+        <tr><td>原型 V127</td><td>工作台 · 发布查缺（缺漏清单、六类清单、一键补发）</td><td>S-3、P1-3、P1-4、P2-1、P2-2</td></tr>
+        <tr><td>原型 V127</td><td>任务平衡（积分 / 圈层均衡、补发 / 改排行建议执行）</td><td>P2-3 ~ P2-5</td></tr>
+        <tr><td>原型 V127</td><td>AI 发布台（平台 chips、覆盖池三选一、18 字段、草稿箱）</td><td>R-1、R-8</td></tr>
+        <tr><td>原型 V127</td><td>发任务配置（素材库 / 素材包 / 人群包 / 标签覆盖池 / 人群组覆盖池）</td><td>P1-5、R-7</td></tr>
+        <tr><td>原型 V127</td><td>审核工作台（审核流转、任务结果录入 / 代录）</td><td>I-3</td></tr>
+        <tr><td>原型 V127</td><td>内容巡检（原标签巡检：凭证巡检 8 类、巡检口径配置）</td><td>R-3</td></tr>
+        <tr><td>原型 V127</td><td>数据接入（平台台账 / 采集任务 / 新闻池 / 声量导入）</td><td>S-3、S-4、R-1</td></tr>
+        <tr><td>原型 V41</td><td>登录、签约、签约管理</td><td>已明确（I-1）</td></tr>
+        <tr><td>原型 V41</td><td>首页（品牌身份一键切换）</td><td>已明确（I-2）</td></tr>
+        <tr><td>原型 V41</td><td>消息中心</td><td>已明确（S-1）</td></tr>
+        <tr><td>原型 V41</td><td>我的主页、排行榜（总榜 / 月榜 / 党委榜）</td><td>S-5；榜单已明确（S-6）</td></tr>
+        <tr><td>原型 V41</td><td>作业详情 / 提交页（退回可重交）、效果数据回填</td><td>R-4；退回已明确（R-2）</td></tr>
+        <tr><td>功能清单 V4</td><td>#5、#6、#25、#43、#91、#94、#100、#109–#111、#115、#116、#119、#127–#131、#152–#154、#218、#225–#227、#233、#238、#255–#258、#261、#264</td><td>全部条目（逐项标注于上方）</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ================= 九、回复摘要 ================= -->
+  <section id="summary">
+    <div class="sec-head"><h2>九、回复摘要与导出</h2><span class="hint">填完点「导出回复文件」，把文件发回即可</span></div>
+    <div class="copybar" style="margin-bottom:14px">
+      <div style="flex:1 1 520px">
+        <label style="display:block;font-size:11px;color:var(--ink-3);letter-spacing:.04em;margin-bottom:6px">整体补充说明（可选）</label>
+        <textarea id="globalNote" class="globalnote" placeholder="例如：整体排期意见、需线下讨论的事项、对若干项的合并结论等"></textarea>
+      </div>
+      <div class="side">
+        <button class="primary" onclick="exportMd()">导出回复文件（.md）</button>
+        <button onclick="exportPdfTip()">导出 PDF</button>
+        <button onclick="exportJson()">保存进度文件（.json）</button>
+        <label class="btn-like" for="importFile">导入进度文件</label>
+        <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+      </div>
+    </div>
+    <div class="copybar">
+      <textarea id="summaryBox" placeholder="点「生成摘要」可预览将要导出的回复内容；也可以在这里临时修改，改动不会写回上方选项。"></textarea>
+      <div class="side">
+        <button class="primary" onclick="buildSummary()">生成摘要</button>
+        <button onclick="copySummary()">复制摘要</button>
+        <button onclick="clearAll()">清空全部填写</button>
+        <span class="hintline" id="copyHint"></span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="noprint">sp_261030 · 产品待确认清单 · 生成于 2026-11-26</div>
+  </footer>
+</div>
+
+<script>
+  const STORAGE_KEY = 'sp261030_product_checklist_v1';
+  const items = Array.from(document.querySelectorAll('.item'));
+  const total = items.length;
+  const doneCount = document.getElementById('doneCount');
+  let currentFilter = 'all';
+  let saveTimer = null;
+
+  // 每项注入「人工回复」输入框
+  items.forEach(item => {
+    const id = item.dataset.id;
+    const box = document.createElement('div');
+    box.className = 'manual';
+    box.innerHTML = '<label>人工回复 <span class="tag">（选项不合适或需补充时填写）</span></label>' +
+      '<textarea rows="2" data-manual="' + id + '" placeholder="例如：选 B，但要求 12 月前补齐；或直接写明其他结论"></textarea>';
+    item.appendChild(box);
+  });
+  function itemDone(item){
+    return !!item.querySelector('input[type="radio"]:checked') ||
+           !!item.querySelector('textarea[data-manual]').value.trim();
+  }
+
+  function refresh(useFilter = true){
+    let done = 0;
+    items.forEach(item => {
+      const checked = item.querySelector('input[type="radio"]:checked');
+      const manual = item.querySelector('textarea[data-manual]');
+      const hasText = !!manual.value.trim();
+      manual.classList.toggle('filled', hasText);
+      item.classList.toggle('done', !!checked || hasText);
+      item.querySelectorAll('.opt').forEach(o => o.classList.toggle('selected', !!o.querySelector('input:checked')));
+      if(checked || hasText) done++;
+    });
+    doneCount.textContent = done;
+    if(useFilter) applyFilter();
+    scheduleSave();
+  }
+
+  function applyFilter(){
+    items.forEach(item => {
+      const isDone = itemDone(item);
+      const p = item.dataset.priority;
+      let show = true;
+      if(currentFilter === 'p0') show = p === 'P0';
+      else if(currentFilter === 'p1') show = p === 'P1';
+      else if(currentFilter === 'p2') show = p === 'P2';
+      else if(currentFilter === 'undone') show = !isDone;
+      else if(currentFilter === 'done') show = isDone;
+      item.classList.toggle('hide', !show);
+    });
+    document.querySelectorAll('section').forEach(sec => {
+      if(sec.id === 'summary' || sec.id === 'decided' || sec.id === 'refs') return;
+      const hasItems = sec.querySelectorAll('.item').length > 0;
+      if(!hasItems) return;
+      const visible = Array.from(sec.querySelectorAll('.item')).some(i => !i.classList.contains('hide'));
+      sec.classList.toggle('hide', !visible);
+    });
+  }
+
+  document.addEventListener('change', e => {
+    if(e.target.matches('input[type="radio"]')) refresh();
+  });
+
+  document.addEventListener('input', e => {
+    if(e.target.matches('textarea[data-manual]')) refresh(false);
+    else if(e.target.id === 'globalNote') scheduleSave();
+  });
+
+  /* ---------- 本机自动保存 / 恢复 ---------- */
+  function collect(){
+    const data = {version:1, exportedAt:new Date().toISOString(), note:'', answers:{}};
+    items.forEach(item => {
+      const id = item.dataset.id;
+      const checked = item.querySelector('input[type="radio"]:checked');
+      const text = item.querySelector('textarea[data-manual]').value.trim();
+      if(checked || text) data.answers[id] = {choice: checked ? checked.value : '', text: text};
+    });
+    data.note = document.getElementById('globalNote').value.trim();
+    return data;
+  }
+
+  function scheduleSave(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveNow, 350);
+  }
+
+  function saveNow(){
+    const dot = document.getElementById('saveDot');
+    const state = document.getElementById('saveState');
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(collect()));
+      dot.classList.remove('off');
+      state.textContent = '已自动保存 ' + new Date().toLocaleTimeString('zh-CN', {hour12:false});
+    }catch(err){
+      dot.classList.add('off');
+      state.textContent = '本机自动保存不可用，请用「保存进度文件」';
+    }
+  }
+
+  function applyData(data){
+    if(!data || typeof data !== 'object') return;
+    const answers = data.answers || {};
+    items.forEach(item => {
+      const id = item.dataset.id;
+      const a = answers[id];
+      if(!a) return;
+      if(a.choice){
+        const r = item.querySelector('input[type="radio"][value="' + a.choice + '"]');
+        if(r) r.checked = true;
+      }
+      if(a.text) item.querySelector('textarea[data-manual]').value = a.text;
+    });
+    if(data.note) document.getElementById('globalNote').value = data.note;
+    refresh(false);
+  }
+
+  function restore(){
+    let raw = null;
+    try{ raw = localStorage.getItem(STORAGE_KEY); }catch(err){ return; }
+    if(!raw) return;
+    try{ applyData(JSON.parse(raw)); }catch(err){}
+  }
+
+  /* ---------- 导出 / 导入 ---------- */
+  function fileStamp(){
+    const d = new Date();
+    const p = n => String(n).padStart(2,'0');
+    return '' + d.getFullYear() + p(d.getMonth()+1) + p(d.getDate());
+  }
+
+  function download(name, text, mime){
+    const blob = new Blob([text], {type: mime + ';charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 500);
+  }
+
+  function optText(checked){
+    const opt = checked.closest('.opt');
+    return opt.querySelector('span').innerText.replace(/\s+/g,' ').trim();
+  }
+
+  function countDone(){
+    let n = 0;
+    items.forEach(item => { if(itemDone(item)) n++; });
+    return n;
+  }
+
+  function buildSummaryText(){
+    const lines = [
+      '# 产品待确认清单回复（sp_261030 · S1）',
+      '',
+      '回复日期：' + new Date().toLocaleDateString('zh-CN'),
+      '已确认：' + countDone() + ' / ' + total,
+      ''
+    ];
+    const note = document.getElementById('globalNote').value.trim();
+    if(note) lines.push('**整体补充说明：** ' + note, '');
+    document.querySelectorAll('section').forEach(sec => {
+      const secItems = Array.from(sec.querySelectorAll('.item'));
+      if(!secItems.length) return;
+      lines.push('## ' + sectionTitle(sec));
+      secItems.forEach(item => {
+        const id = item.dataset.id;
+        const title = item.querySelector('.item-head h3').textContent.trim();
+        const checked = item.querySelector('input[type="radio"]:checked');
+        const text = item.querySelector('textarea[data-manual]').value.trim();
+        lines.push('### ' + id + ' ' + title + '（' + item.dataset.priority + '）');
+        if(checked) lines.push('- 结论：' + optText(checked));
+        else if(text) lines.push('- 结论：人工回复（见下）');
+        else lines.push('- 结论：未确认');
+        if(text) lines.push('- 人工补充：' + text.replace(/\n/g, '；'));
+        const refs = Array.from(item.querySelectorAll('.ref')).map(r => r.textContent.trim());
+        if(refs.length) lines.push('- 对照：' + refs.join('；'));
+        lines.push('');
+      });
+    });
+    return lines.join('\n');
+  }
+
+  function exportMd(){
+    download('产品回复_sp261030_' + fileStamp() + '.md', buildSummaryText(), 'text/markdown');
+  }
+
+  function exportJson(){
+    download('产品回复_sp261030_' + fileStamp() + '.json', JSON.stringify(collect(), null, 2), 'application/json');
+  }
+
+  function exportPdfTip(){
+    buildSummary();
+    window.print();
+  }
+
+  document.getElementById('importFile').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        applyData(JSON.parse(reader.result));
+        saveNow();
+        buildSummary();
+        alert('已导入进度文件：' + f.name);
+      }catch(err){
+        alert('文件解析失败，请确认是本页导出的 .json 进度文件');
+      }
+    };
+    reader.readAsText(f, 'utf-8');
+    e.target.value = '';
+  });
+
+  document.querySelectorAll('.filters button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filters button').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      currentFilter = btn.dataset.filter;
+      applyFilter();
+    });
+  });
+
+  function sectionTitle(sec){
+    const h = sec.querySelector('.sec-head h2');
+    return h ? h.textContent.trim() : '';
+  }
+
+  function buildSummary(){
+    document.getElementById('summaryBox').value = buildSummaryText();
+    document.getElementById('summaryBox').scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  function copySummary(){
+    const box = document.getElementById('summaryBox');
+    if(!box.value) buildSummary();
+    const hint = document.getElementById('copyHint');
+    const text = box.value;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(() => {
+        hint.textContent = '已复制';
+        setTimeout(() => hint.textContent = '', 1800);
+      }).catch(() => fallbackCopy(box, hint));
+    } else {
+      fallbackCopy(box, hint);
+    }
+  }
+
+  function fallbackCopy(box, hint){
+    box.focus(); box.select();
+    try{ document.execCommand('copy'); hint.textContent = '已复制'; setTimeout(() => hint.textContent = '', 1800); }
+    catch(e){ hint.textContent = '请手动全选复制'; }
+  }
+
+  function clearAll(){
+    if(!confirm('确定清空全部勾选、人工回复与整体说明？清空后不可恢复。')) return;
+    document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+    document.querySelectorAll('textarea[data-manual]').forEach(t => t.value = '');
+    document.getElementById('globalNote').value = '';
+    document.getElementById('summaryBox').value = '';
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(err){}
+    refresh();
+    document.getElementById('saveState').textContent = '已清空本机记录';
+    document.getElementById('saveDot').classList.add('off');
+  }
+
+  restore();
+  refresh(false);
+</script>
+</body>
+</html>
