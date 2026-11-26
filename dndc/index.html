@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<!-- 目录索引页：打开时向 GitHub 接口实时获取本目录及所有子目录的文件列表，不需要构建。
+     用在别的文件夹：把这个文件拷过去即可（按所在位置自动找到对应目录）。
+     换仓库或分支：改脚本开头的 REPO。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>目录索引</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: #f4f6f9; color: #2c3e50; line-height: 1.65; padding: 24px 16px 60px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.08); padding: 26px 30px; }
+  .crumbs { font-size: 13px; margin-bottom: 4px; }
+  .crumbs:empty { display: none; }
+  .crumbs a { color: #7f8c9b; text-decoration: none; }
+  .crumbs a:hover { color: #23517e; text-decoration: underline; }
+  .crumbs b { color: #4a5b6d; font-weight: 600; }
+  .head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+  h1 { font-size: 22px; color: #1a2a3a; overflow-wrap: anywhere; }
+  .chip { font-size: 12px; padding: 3px 12px; border-radius: 20px; background: #eef2f7; color: #4a5b6d; border: 1px solid #dde4ec; }
+  .actions { margin-left: auto; display: flex; gap: 8px; }
+  .btn {
+    font-family: inherit; font-size: 12px; line-height: 1.5; padding: 4px 12px;
+    border-radius: 6px; border: 1px solid #dde4ec; background: #fff; color: #4a5b6d; cursor: pointer;
+  }
+  .btn:hover { background: #f2f7fd; color: #23517e; }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .sub { color: #7f8c9b; font-size: 13px; margin: 4px 0 16px; }
+  .sub:empty { display: none; }
+  .note { background: #fffaf0; border: 1px solid #f2e0b8; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #7a5b13; margin-bottom: 14px; }
+  .note b { color: #5d4408; }
+  .note a { color: #23517e; margin-left: 8px; }
+  .acts { margin-top: 8px; }
+  .tree ul { list-style: none; }
+  .tree li { border-top: 1px solid #f0f3f7; }
+  summary, .file { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 6px; }
+  summary { list-style: none; cursor: pointer; }
+  summary::-webkit-details-marker { display: none; }
+  summary::before {
+    content: ""; flex: none; width: 0; height: 0;
+    border-left: 5px solid #97a3b0; border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+    transition: transform .15s;
+  }
+  details[open] > summary::before { transform: rotate(90deg); }
+  .file::before { content: ""; flex: none; width: 5px; }
+  summary:hover, .file:hover { background: #f2f7fd; }
+  .ico { flex: none; width: 16px; height: 16px; }
+  .name, .file a { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .name { font-weight: 600; color: #1a2a3a; }
+  .file a { color: #23517e; text-decoration: none; }
+  .file a:hover { color: #3468a8; text-decoration: underline; }
+  .meta { flex: none; font-size: 12px; color: #97a3b0; white-space: nowrap; }
+  details > ul { margin: 2px 0 6px 19px; padding-left: 12px; border-left: 1px dashed #dde4ec; }
+  .empty { color: #a5b0bc; font-size: 13px; padding: 10px; }
+  .spin {
+    display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -2px;
+    border: 2px solid #cfd8e3; border-top-color: #3468a8; border-radius: 50%; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .footer { text-align: center; color: #a5b0bc; font-size: 12px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-dir" viewBox="0 0 16 16"><path d="M1.5 3.5A1.5 1.5 0 0 1 3 2h3.2l1.4 1.5H13a1.5 1.5 0 0 1 1.5 1.5v7.5a1.5 1.5 0 0 1-1.5 1.5H3a1.5 1.5 0 0 1-1.5-1.5z" fill="#fbd37a" stroke="#e0a93a" stroke-linejoin="round"/></symbol>
+  <symbol id="i-file" viewBox="0 0 16 16"><path d="M3.5 1.5h5.8L13 5.2v8.3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V2.5a1 1 0 0 1 1-1z" fill="#fff" stroke="#8fa3b8" stroke-linejoin="round"/><path d="M9 1.5v3.2a.5.5 0 0 0 .5.5H13" fill="none" stroke="#8fa3b8" stroke-linejoin="round"/></symbol>
+</svg>
+<div class="wrap">
+  <div class="card">
+    <div class="crumbs" id="crumbs"></div>
+    <div class="head">
+      <h1 id="title">目录索引</h1><span class="chip">目录索引</span>
+      <span class="actions">
+        <button id="refresh" class="btn" type="button">刷新</button>
+        <button id="toggle" class="btn" type="button" hidden>全部收起</button>
+      </span>
+    </div>
+    <div class="sub" id="status" role="status" aria-live="polite"></div>
+    <div class="note" id="notice" hidden></div>
+    <div class="tree" id="tree"></div>
+    <noscript><div class="note">这个页面需要开启 JavaScript 才能从 GitHub 获取目录。<a href="https://github.com/limyang94/limyang94.github.io/tree/main/dndc">也可以直接在 GitHub 上查看</a></div></noscript>
+  </div>
+  <div class="footer">目录数据来自 GitHub，每次打开自动更新</div>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  // 换仓库 / 分支只改这里
+  const REPO = { owner: 'limyang94', repo: 'limyang94.github.io', branch: 'main' };
+  const API = `https://api.github.com/repos/${REPO.owner}/${REPO.repo}/git/trees/${REPO.branch}?recursive=1`;
+  const GITHUB = `https://github.com/${REPO.owner}/${REPO.repo}/tree/${REPO.branch}`;
+  const CACHE_KEY = `dir-index:${REPO.owner}/${REPO.repo}@${REPO.branch}:${location.pathname}`;
+  const LOADING = '<p class="empty"><span class="spin"></span>正在从 GitHub 获取目录…</p>';
+
+  const $ = (id) => document.getElementById(id);
+  const els = { title: $('title'), crumbs: $('crumbs'), status: $('status'), notice: $('notice'), tree: $('tree'), refresh: $('refresh'), toggle: $('toggle') };
+
+  const collator = new Intl.Collator('zh-Hans-CN', { numeric: true, sensitivity: 'base' });
+  const byName = (a, b) => collator.compare(a.name, b.name) || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const enc = (path) => path.split('/').map(encodeURIComponent).join('/');
+  const pad = (n) => String(n).padStart(2, '0');
+  const fail = (reason) => Object.assign(new Error(reason), { reason });
+
+  let current = null;          // 当前显示的内容：{ time, base, tree }
+  let collapsed = new Set();   // 用户收起的文件夹（仓库里的完整路径）
+  let expandedAll = true;
+  let painted = false;
+  let busy = false;
+
+  function fmtSize(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  function fmtTime(ts) {
+    const d = new Date(ts);
+    const hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return d.toDateString() === new Date().toDateString() ? hm : `${d.getMonth() + 1}-${d.getDate()} ${hm}`;
+  }
+
+  function count(node) {
+    const total = { dirs: node.dirs.length, files: node.files.length };
+    for (const d of node.dirs) {
+      const c = count(d);
+      total.dirs += c.dirs;
+      total.files += c.files;
+    }
+    return total;
+  }
+
+  const describe = ({ dirs, files }) => [
+    dirs && `${dirs} 个文件夹`,
+    files && `${files} 个文件`,
+  ].filter(Boolean).join(' · ') || '空';
+
+  // 页面所在目录，按 / 拆开；http(s) 下就是仓库里的相对路径
+  function pageDir() {
+    let path = location.pathname;
+    try { path = decodeURIComponent(path); } catch (e) { /* 路径里有非法编码时就用原样 */ }
+    return path.replace(/index\.html?$/i, '').split('/').filter(Boolean);
+  }
+
+  // 在仓库里找到当前目录：从页面目录的最后一段往前拼，取能对上的最长一段
+  function findBase(segments, dirs) {
+    if (!segments.length) return '';
+    for (let i = 0; i < segments.length; i++) {
+      const candidate = segments.slice(i).join('/');
+      if (dirs.has(candidate)) return candidate;
+    }
+    return null;
+  }
+
+  // 接口返回的平铺文件树 → { dirs: 所有文件夹, files: [{ path, size }] }，隐藏文件不显示
+  function parse(data) {
+    const dirs = new Set(['']);
+    const files = [];
+    for (const e of data.tree) {
+      if (e.path.split('/').some((s) => s.startsWith('.'))) continue;
+      if (e.type === 'tree') dirs.add(e.path);
+      else if (e.type === 'blob') files.push({ path: e.path, size: e.size || 0 });
+    }
+    return { dirs, files, truncated: !!data.truncated };
+  }
+
+  function buildTree(base, { dirs, files }) {
+    const prefix = base ? `${base}/` : '';
+    const root = { name: '', path: base, dirs: [], files: [] };
+    const nodes = new Map([[base, root]]);
+    const nodeAt = (path) => {
+      let node = nodes.get(path);
+      if (!node) {
+        node = { name: path.slice(path.lastIndexOf('/') + 1), path, dirs: [], files: [] };
+        nodes.set(path, node);
+        nodeAt(path.slice(0, path.lastIndexOf('/'))).dirs.push(node);
+      }
+      return node;
+    };
+    for (const path of dirs) {
+      if (path !== base && path.startsWith(prefix)) nodeAt(path);
+    }
+    for (const f of files) {
+      if (!f.path.startsWith(prefix) || f.path === `${prefix}index.html`) continue; // 不列出索引页自己
+      nodeAt(f.path.slice(0, f.path.lastIndexOf('/'))).files.push({ name: f.path.slice(f.path.lastIndexOf('/') + 1), size: f.size });
+    }
+    (function tidy(node) { // 去掉里面一个可见文件都没有的文件夹，并排序（文件夹在前）
+      let visible = node.files.length;
+      node.dirs = node.dirs.filter((d) => {
+        const n = tidy(d);
+        visible += n;
+        return n > 0;
+      });
+      node.dirs.sort(byName);
+      node.files.sort(byName);
+      return visible;
+    })(root);
+    return root;
+  }
+
+  function toHtml(node, prefix, out) {
+    for (const d of node.dirs) {
+      out.push(`<li><details open data-dir="${esc(d.path)}"><summary><svg class="ico"><use href="#i-dir"/></svg><span class="name">${esc(d.name)}/</span><span class="meta">${describe(count(d))}</span></summary><ul>`);
+      toHtml(d, `${prefix + d.name}/`, out);
+      out.push('</ul></details></li>');
+    }
+    for (const f of node.files) {
+      out.push(`<li class="file"><svg class="ico"><use href="#i-file"/></svg><a href="${esc(enc(prefix + f.name))}">${esc(f.name)}</a><span class="meta">${fmtSize(f.size)}</span></li>`);
+    }
+  }
+
+  // 把一份目录数据显示出来（首次从缓存显示、或从 GitHub 拿到最新数据后都会走这里）
+  function apply(entry) {
+    current = entry;
+    const name = entry.base ? entry.base.slice(entry.base.lastIndexOf('/') + 1) : REPO.repo;
+    els.title.textContent = name;
+    document.title = `${name} · 目录索引`;
+    els.crumbs.innerHTML = `<a href="${GITHUB}${entry.base ? `/${enc(entry.base)}` : ''}" target="_blank" rel="noopener">${esc(REPO.repo)} / <b>${esc(entry.base)}</b></a>`;
+    if (painted) els.tree.querySelectorAll('details:not([open])').forEach((d) => collapsed.add(d.dataset.dir));
+    const out = [];
+    toHtml(entry.tree, '', out);
+    els.tree.innerHTML = out.length ? `<ul>${out.join('')}</ul>` : '<p class="empty">这个文件夹里还没有内容</p>';
+    els.tree.querySelectorAll('details').forEach((d) => { d.open = expandedAll && !collapsed.has(d.dataset.dir); });
+    painted = true;
+    els.toggle.hidden = !entry.tree.dirs.length;
+    els.toggle.textContent = expandedAll ? '全部收起' : '全部展开';
+  }
+
+  function setStatus(html) { els.status.innerHTML = html; }
+
+  function showNotice(text, retry) {
+    els.notice.innerHTML = `${esc(text)}${retry ? '<div class="acts"><button class="btn" type="button" data-action="retry">重试</button></div>' : ''}`;
+    els.notice.hidden = false;
+  }
+
+  // localStorage 在隐私模式等场景下可能不可用，读写都包一层
+  function readCache() {
+    try { return JSON.parse(localStorage.getItem(CACHE_KEY)); } catch (e) { return null; }
+  }
+  function writeCache(entry) {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(entry)); } catch (e) { /* 存不进去就算了 */ }
+  }
+
+  function describeError(status, body, headers) {
+    const message = body && body.message ? String(body.message) : '';
+    if ((status === 403 || status === 429) && (headers.get('x-ratelimit-remaining') === '0' || /rate limit/i.test(message))) {
+      const reset = Number(headers.get('x-ratelimit-reset'));
+      return `GitHub 免费接口的次数用完了（同一网络每小时 60 次），${reset ? `${fmtTime(reset * 1000)} 恢复` : '最多一小时后恢复'}`;
+    }
+    if (status === 404) return `找不到 ${REPO.owner}/${REPO.repo} 的 ${REPO.branch} 分支（仓库不是公开的也会报这个）`;
+    if (status >= 500) return `GitHub 接口出错了（${status}），稍后再试`;
+    return `GitHub 接口返回了 ${status}${message ? `：${message}` : ''}`;
+  }
+
+  async function fetchTree(force) {
+    const opts = { headers: { Accept: 'application/vnd.github+json' } };
+    if (force) opts.cache = 'reload'; // 点「刷新」时绕过浏览器缓存，真去 GitHub 拿
+    let res;
+    try {
+      res = await fetch(API, opts);
+    } catch (e) {
+      throw fail('连不上 api.github.com，请检查网络后重试');
+    }
+    if (!res.ok) throw fail(describeError(res.status, await res.json().catch(() => null), res.headers));
+    const data = await res.json().catch(() => null);
+    if (!data || !Array.isArray(data.tree)) throw fail('GitHub 返回的数据格式不对');
+    return data;
+  }
+
+  async function load(force) {
+    if (busy) return;
+    busy = true;
+    els.refresh.disabled = true;
+    els.notice.hidden = true;
+    if (!current) {
+      const cached = readCache();
+      if (cached) apply(cached);
+      else els.tree.innerHTML = LOADING;
+    }
+    setStatus(`<span class="spin"></span>正在从 GitHub ${current ? '更新' : '获取'}目录…`);
+    try {
+      const flat = parse(await fetchTree(force));
+      const base = findBase(pageDir(), flat.dirs);
+      if (base === null) throw fail('仓库里找不到当前目录');
+      const tree = buildTree(base, flat);
+      const same = current && JSON.stringify(current.tree) === JSON.stringify(tree);
+      apply(same ? { time: Date.now(), base, tree: current.tree } : { time: Date.now(), base, tree });
+      writeCache(current);
+      setStatus(`${describe(count(current.tree))} · 刚刚从 GitHub 更新`);
+      if (flat.truncated) showNotice('文件太多，GitHub 只返回了一部分，下面的列表可能不全。');
+    } catch (err) {
+      const reason = (err && err.reason) || '出了点意外';
+      if (current) {
+        setStatus(`${describe(count(current.tree))} · ${fmtTime(current.time)} 的目录`);
+        showNotice(`没能拿到最新目录：${reason}。现在显示的是 ${fmtTime(current.time)} 的旧列表。`, true);
+      } else {
+        setStatus('');
+        els.tree.innerHTML = `<div class="note"><b>没能从 GitHub 拿到目录</b><br>${esc(reason)}<div class="acts"><button class="btn" type="button" data-action="retry">重试</button><a href="${GITHUB}/${enc(pageDir().join('/'))}" target="_blank" rel="noopener">在 GitHub 上查看这个文件夹</a></div></div>`;
+      }
+    }
+    busy = false;
+    els.refresh.disabled = false;
+  }
+
+  els.refresh.addEventListener('click', () => load(true));
+  els.toggle.addEventListener('click', () => {
+    expandedAll = !expandedAll;
+    collapsed = new Set();
+    els.tree.querySelectorAll('details').forEach((d) => { d.open = expandedAll; });
+    els.toggle.textContent = expandedAll ? '全部收起' : '全部展开';
+  });
+  document.addEventListener('click', (e) => {
+    if (e.target.closest && e.target.closest('[data-action="retry"]')) load(true);
+  });
+
+  load(false);
+})();
+</script>
+</body>
+</html>
